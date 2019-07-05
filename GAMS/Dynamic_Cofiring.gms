@@ -160,3 +160,4 @@ biomassCost(Y,P,RM,Tech)..
 
 biomassCost(Y,P,RM,Tech)$ RMTe(RM,Tech)..
          CostBio(y,P,RM,Tech) =E= SUM((S)$transDistSupplyPlant(S,P),costBm(S,RM)*BSP(y,S,RM,P,Tech));
+ ************************jkll*************

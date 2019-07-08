@@ -3,7 +3,7 @@
 [RP:UNTITLED_1]
 1=
 
-[RP:DYNAMIC_COFIRING]
+[RP:COFIREDYNRECEMT]
 1=
 
 [RP:COFIREDYNREC]
@@ -12,18 +12,33 @@
 [RP:BECCS_DYN]
 1=
 
+[RP:DYNAMIC_COFIRING]
+1=
+
 [MRUFILES]
-1=P:\beaver\HoangAnh_CofirVN\Bewhere\Archive\BECCS_Dyn.gms
-2=P:\beaver\HoangAnh_CofirVN\Bewhere\Archive\cofireDynRec.gms
-3=P:\beaver\HoangAnh_CofirVN\Bewhere\GAMS\Dynamic_Cofiring.gms
-4=P:\beaver\AnHa\BeWhere_Cofire_Dyn\cofireDynRec.gms
-5=P:\beaver\HoangAnh_CofirVN\Bewhere\GAMS\Untitled_1.gms
+1=P:\beaver\AnHa\BeWhere_Cofire_Dyn\cofireDynRecEMT.gms
+2=P:\beaver\HoangAnh_CofirVN\Bewhere\Archive\BECCS_Dyn.gms
+3=P:\beaver\HoangAnh_CofirVN\Bewhere\Archive\cofireDynRec.gms
+4=P:\beaver\HoangAnh_CofirVN\Bewhere\GAMS\Dynamic_Cofiring.gms
+5=P:\beaver\AnHa\BeWhere_Cofire_Dyn\cofireDynRec.gms
+6=P:\beaver\HoangAnh_CofirVN\Bewhere\GAMS\Untitled_1.gms
 
 [OPENWINDOW_1]
-FILE0=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.gms
-FILE1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.gms
-MAXIM=1
+FILE0=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\BECCS_Dyn.gms
+FILE1=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\cofireDynRec.gms
+FILE2=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.gms
+FILE3=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\cofireDynRec.gms
+MAXIM=0
 TOP=50
 LEFT=50
 HEIGHT=400
 WIDTH=400
+
+[OPENWINDOW_2]
+FILE0=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\cofireDynRec.gms
+FILE1=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\cofireDynRec.gms
+MAXIM=1
+TOP=-5
+LEFT=441
+HEIGHT=628
+WIDTH=1608

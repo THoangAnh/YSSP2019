@@ -112,7 +112,7 @@ parameter UrateLow(Tech)/
 $include txt_file_beaver/parameter-utilization-rate-low.txt
 /;
 
-parameter EffCof(P)/
+parameter EffCof(Tech)/
 $include txt_file_beaver/parameter-efficiency-cofiring.txt
 /;
 
@@ -153,7 +153,7 @@ binary variable
 UP(Y,P,Tech)
 
 positive variables
-BSP(Y,S,RM,P,Tech)                       Amount of biomass used in the coal plant (unit)
+BSP(Y,S,RM,P,Tech)                       Amount of biomass used in the coal plant (unit )
 
 CoalProductionCost(Y,P)                  Production cost of electricity from coal power plant
 CofirProductionCost(Y,P,Tech)            Production cost of electricity from co-firing power plant
@@ -176,12 +176,16 @@ TOTEMISSIONS(Y)
 TOTEMISSIONSCOST(Y)
 
 equations
+
+****** ELECTRICITY PRODUCTIONS ******
+ElectricityBiomass(Y,P,Tech)          Electricity produced from biomass
+
 ****** COSTS ******
 FossilCost(Y,P)
 BiomassCost(Y,P,RM,Tech)
 biomassTransportSPCost(Y,P,S,RM,T)
 ProductionCostCoal(Y,P)
-ProductionCostCoFir(Y,P)
+ProductionCostCoFir(Y,P,Tech)
 TotalCosteq(Y)
 
 ****** EMISSIONS ******
@@ -208,7 +212,7 @@ ElBioMinConstraint(Y,P,Tech)
 ****** COAL COST FOR NORMAL COAL OR CO-FIRING CONFIGURATION ******
 
 FossilCost(Y,P)..
-         CostFossil(Y,P) =E= SUM(Tech,$(1-UP(Y,P,Tech),coalPrice(Y,P)*(Generation(Y,P)-BSP(Y,S,RM,P,Tech)));
+         CostFossil(Y,P) =E= SUM(Tech,$(1-UP(Y,P,Tech),coalPrice(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech)));
 
 ****** BIOMASS COST FOR CO-FIRING CONFIGURATION ******
 
@@ -218,7 +222,7 @@ BiomassCost(Y,P,RM,Tech)..
 ****** BIOMASS TRANSPORT COST TO PLANTS ******
 
 biomassTransportSPCost(Y,P,S,RM,T)..
-         CostBMTransport(Y,P,S,RM,T,Tech) =E= transDistSupplyPlant(S,P,T)*(tranBiovar(RM,T) + tranBiofix(RM,T))*BSP(Y,S,RM,P,Tech),$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and UP(Y,P,Tech));
+         CostBMTransport(Y,P,S,RM,T,Tech) =E= (transDistSupplyPlant(S,P,T)*(tranBiovar(RM,T) + tranBiofix(RM,T))*BSP(Y,S,RM,P,Tech)),$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and UP(Y,P,Tech));
 
 ****** PRODUCTION COST ******
 
@@ -229,10 +233,15 @@ biomassTransportSPCost(Y,P,S,RM,T)..
 ProductionCostCoal(Y,P)..
          CoalProductionCost(Y,P) =E= SUM(Tech,$(1-UP(Y,P,Tech),CostIOMCoal(Y,P)*Generation(Y,P));
 
+ProductionCostCoal(Y,P)..
+         CoalProductionCost(Y,P) =E= CostIOMCoal(Y,P)*Generation(Y,P)),$(SUM(Tech,(1-UP(Y,P,Tech)));
+
 ******------- PRODUCTION COST FOR CO-FIRING CONFIGURATION ------******
 
-ProductionCostCoFir(Y,P)..
-         CofirProductionCost(Y,P,Tech) =E= (InvestmentCoal(Y,P)*(Generation(Y,P)-BSP(Y,S,RM,P,Tech))+ SpecificCostCofir(Y,P,Tech)*BSP(Y,S,RM,P,Tech)/Generation(Y,P)*Capacity(P))*CRFCofir(P)+ FixOMCostCofir(Y,P,Tech)*Capacity(P)+ VarOMCostCofir(Y,P,Tech)*Generation(Y,P),$(UP(Y,P,Tech));
+ProductionCostCoFir(Y,P,Tech)..
+         CofirProductionCost(Y,P,Tech) =E= ((InvestmentCoal(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech))+ SpecificCostCofir(Y,P,Tech)*ElBio(Y,P,Tech)/Generation(Y,P)*Capacity(P))*CRFCofir(P)
+                                           + FixOMCostCofir(Y,P,Tech)*Capacity(P)
+                                           + VarOMCostCofir(Y,P,Tech)*Generation(Y,P)),$(UP(Y,P,Tech));
 
 ***************** TOTAL COST ******************
 
@@ -263,7 +272,7 @@ transportBMEmission(Y,P,S,T,Tech)
 
 ProductionEmission(Y,P,Tech)..
          EmissionProduction(Y,P,Tech) =E=
-         SUM((RM,Tech),EmFoscoal(Y,P)*(Generation(Y,P)-BSP(Y,S,RM,P,Tech)));
+         SUM((RM,Tech),EmFoscoal(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech)));
 
 
 totalEmissions(Y)..
@@ -300,6 +309,12 @@ supplyBiomass(Y,S,RM)..
          SUM((P,Tech,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech)),BSP(Y,S,RM,P,Tech))
          =L= AvailableBiomass(Y,S,RM);
 
+******------ ELCTRICITY PRODUCED FROM BIOMASS  ------******
+
+ElectricityBiomass(Y,P,Tech)..
+         SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech)),EffCof(Tech)*BSP(Y,S,RM,P,Tech))
+         =E= ElBio(Y,P,Tech);
+
 ******------ TECHNOLOGIES ------******
 
 * Time constraint, When a plant is built, it stays the year after
@@ -317,11 +332,10 @@ plantTypeRestriction(Y,P)..
 * Contraints on max and min biomass
 
 ElBioMaxConstraint(Y,P,Tech)..
-          SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech)),BSP(Y,S,RM,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P)*UP(Y,P,Tech);
+          SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech)),ElBio(Y,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 ElBioMinConstraint(Y,P,Tech)..
-         SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech)),BSP(Y,S,RM,P,Tech)) =G= UrateLow(tech)*Generation(Y,P)*UP(Y,P,Tech);
-
+         SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech)),ElBio(Y,P,Tech)) =G= UrateLow(tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 
 * ------------------------------------------------------------------------------

@@ -54,6 +54,10 @@ parameter initialStatus(P,Tech)/
 $include txt_file_beaver/parameter-initial-status.txt
 /;
 
+parameter EffCoal(P)/
+$include txt_file_beaver/parameter-efficiency-coal_plant.txt
+/;
+
 ****** COAL ******
 
 parameter Capacity(P) /
@@ -183,7 +187,7 @@ ElectricityBiomass(Y,P,Tech)          Electricity produced from biomass
 ****** COSTS ******
 FossilCost(Y,P)
 BiomassCost(Y,P,RM,Tech)
-biomassTransportSPCost(Y,P,S,RM,T)
+biomassTransportSPCost(Y,P,S,RM,T,Tech)
 ProductionCostCoal(Y,P)
 ProductionCostCoFir(Y,P,Tech)
 TotalCosteq(Y)
@@ -198,7 +202,7 @@ combine
 ****** CONSTRAINTS ******
 availabilityBM(Y,S,RM)
 supplyBiomass(Y,S,RM)
-constraintsBSP(Y,S,RM,P,Tech)
+*constraintsBSP(Y,S,RM,P,Tech)
 plantStatus(Y,P,Tech)
 plantTypeRestriction(Y,P)
 ElBioMaxConstraint(Y,P,Tech)
@@ -212,17 +216,20 @@ ElBioMinConstraint(Y,P,Tech)
 ****** COAL COST FOR NORMAL COAL OR CO-FIRING CONFIGURATION ******
 
 FossilCost(Y,P)..
-         CostFossil(Y,P) =E= SUM(Tech,$(1-UP(Y,P,Tech),coalPrice(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech)));
+         CostFossil(Y,P) =E= SUM((Tech),coalPrice(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech))/EffCoal(P));
+
 
 ****** BIOMASS COST FOR CO-FIRING CONFIGURATION ******
 
 BiomassCost(Y,P,RM,Tech)..
-         CostBio(Y,P,RM,Tech) =E= SUM((S)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and UP(Y,P,Tech)),BiomPrice(Y,S,RM)*BSP(Y,S,RM,P,Tech));
+         CostBio(Y,P,RM,Tech) =E= SUM((S,T)$(transDistSupplyPlant(S,P,T)and RMTe(RM,Tech)),BiomPrice(Y,S,RM)*BSP(Y,S,RM,P,Tech));
+
 
 ****** BIOMASS TRANSPORT COST TO PLANTS ******
 
-biomassTransportSPCost(Y,P,S,RM,T)..
-         CostBMTransport(Y,P,S,RM,T,Tech) =E= (transDistSupplyPlant(S,P,T)*(tranBiovar(RM,T) + tranBiofix(RM,T))*BSP(Y,S,RM,P,Tech)),$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and UP(Y,P,Tech));
+biomassTransportSPCost(Y,P,S,RM,T,Tech)..
+         CostBMTransport(Y,P,S,RM,T,Tech) =E= (transDistSupplyPlant(S,P,T)*(tranBiovar(Y,RM,T) + tranBiofix(Y,RM,T))*BSP(Y,S,RM,P,Tech)) $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech));
+
 
 ****** PRODUCTION COST ******
 
@@ -231,17 +238,20 @@ biomassTransportSPCost(Y,P,S,RM,T)..
 ******------- PRODUCTION COST FOR NORMAL COAL CONFIGURATION ------******
 
 ProductionCostCoal(Y,P)..
-         CoalProductionCost(Y,P) =E= SUM(Tech,$(1-UP(Y,P,Tech),CostIOMCoal(Y,P)*Generation(Y,P));
+         CoalProductionCost(Y,P) =E= CostIOMCoal(Y,P)*Generation(Y,P)*(SUM(Tech,(1-UP(Y,P,Tech))));
 
-ProductionCostCoal(Y,P)..
-         CoalProductionCost(Y,P) =E= CostIOMCoal(Y,P)*Generation(Y,P)),$(SUM(Tech,(1-UP(Y,P,Tech)));
 
 ******------- PRODUCTION COST FOR CO-FIRING CONFIGURATION ------******
 
 ProductionCostCoFir(Y,P,Tech)..
-         CofirProductionCost(Y,P,Tech) =E= ((InvestmentCoal(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech))+ SpecificCostCofir(Y,P,Tech)*ElBio(Y,P,Tech)/Generation(Y,P)*Capacity(P))*CRFCofir(P)
-                                           + FixOMCostCofir(Y,P,Tech)*Capacity(P)
-                                           + VarOMCostCofir(Y,P,Tech)*Generation(Y,P)),$(UP(Y,P,Tech));
+         CofirProductionCost(Y,P,Tech) =E= ((InvestmentCoal(Y,P)*Generation(Y,P)*UP(Y,P,Tech)+ SpecificCostCofir(Y,P,Tech)*ElBio(Y,P,Tech)/Generation(Y,P)*Capacity(P))*CRFCofir(P)
+                                           + FixOMCostCofir(Y,P,Tech)*Capacity(P)*UP(Y,P,Tech)
+                                           + VarOMCostCofir(Y,P,Tech)*Generation(Y,P)*UP(Y,P,Tech));
+
+*ProductionCostCoFir(Y,P,Tech)..
+*CofirProductionCost(Y,P,Tech) =E= ((InvestmentCoal(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech))+ SpecificCostCofir(Y,P,Tech)*ElBio(Y,P,Tech)/Generation(Y,P)*Capacity(P))*CRFCofir(P)
+*+ FixOMCostCofir(Y,P,Tech)*Capacity(P)
+*+ VarOMCostCofir(Y,P,Tech)*Generation(Y,P))*(UP(Y,P,Tech));
 
 ***************** TOTAL COST ******************
 
@@ -254,7 +264,9 @@ TotalCosteq(Y)..
 *   biomass transport cost
          + SUM((P,S,RM,T,Tech),CostBMTransport(Y,P,S,RM,T,Tech))
 *   production cost
-         + SUM((P,Tech),CoalProductionCost(Y,P)+CofirProductionCost(Y,P,Tech));
+         + SUM((P,Tech),CoalProductionCost(Y,P))
+*   production cost co_firing
+         + SUM((P,Tech),CofirProductionCost(Y,P,Tech));
 
 
 *-------------------------------------------------------------------------------
@@ -263,16 +275,20 @@ TotalCosteq(Y)..
 
 ****** BIOMASS TRANSPORT EMISSIONS ******
 
-transportBMEmission(Y,P,S,T,Tech)
+*transportBMEmission(Y,P,S,T,Tech)..EmissionBMTransport(Y,P,S,T,Tech) =E= SUM(RM $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and UP(Y,P,Tech)),(transEmissionBiomass(RM,T)*transDistSupplyPlant(S,P,T)*BSP(Y,S,RM,P,Tech)));
+
+transportBMEmission(Y,P,S,T,Tech)..
          EmissionBMTransport(Y,P,S,T,Tech) =E=
-         SUM(RM $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and UP(Y,P,Tech)),
+         SUM(RM $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech)),
          (transEmissionBiomass(RM,T)*transDistSupplyPlant(S,P,T)*BSP(Y,S,RM,P,Tech)));
+
 
 ****** PRODUCTION EMISSIONS FROM COAL ******
 
 ProductionEmission(Y,P,Tech)..
          EmissionProduction(Y,P,Tech) =E=
-         SUM((RM,Tech),EmFoscoal(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech)));
+         SUM((RM),EmFoscoal(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech)));
+** Check if emission from coal is expressed by coal heat energy or electricity. If by coal energy, should add Eff_coal
 
 
 totalEmissions(Y)..
@@ -280,7 +296,7 @@ totalEmissions(Y)..
 * biomass transport
          SUM((P,S,T,Tech),EmissionBMTransport(Y,P,S,T,Tech))
 * coal combustion
-         + SUM((P),EmissionProduction(Y,P,Tech));
+         + SUM((P,Tech),EmissionProduction(Y,P,Tech));
 
 totalEmissionsCost(Y)..
          TOTEMISSIONSCOST(Y) =E= SUM((P,Tech),TOTEMISSIONS(Y)*carbonprice(Y,P,Tech));
@@ -322,8 +338,7 @@ plantStatus(Y,P,Tech)..
         UP(Y,P,Tech) =G= initialStatus(P,Tech)$(ORD(Y) eq 1) + UP(Y-1,P,Tech)$(ORD(Y) gt 1);
 
 * Constraints when no co-firing, BSP = 0
-constraintsBSP(Y,S,RM,P,Tech)..
-         BSP(Y,S,RM,P,Tech) =E= 0 $(1-UP(Y,P,Tech));
+*constraintsBSP(Y,S,RM,P,Tech)..BSP(Y,S,RM,P,Tech) =E= 0 $(1-UP(Y,P,Tech));
 
 * Plant type restriction
 plantTypeRestriction(Y,P)..
@@ -375,11 +390,12 @@ SOLVE facilityLocation USING MIP MINIMIZING COMBINEEQUATIONS;
 * ------------------------------------------------------------------------------
 * ------------------------------------------------------------------------------
 *
-
+$ontext
 FILE resultFile/
-$include txt_file_beaver/file-solution.txt
-/;
-PUT resultFile/;
+*$include txt_file_beaver/file-solution.txt
+//;
+
+PUT resultFile;
 PUT "%---- Resolution ------"/;
 *
 PUT "MODELSTAT = "
@@ -397,24 +413,25 @@ PUT ";"/;
 PUT "%---- Main numbers ----"/;
 *
 
+PUT "np.Plants = ["/
+LOOP((Y,Tech), PUT "[" ORD(Y):6:0"," PUT ORD(Tech):6:0"," SUM(P,UP.L(Y,P,Tech)):15:1"],"/)
+PUT "]"/;
+
+PUT "np.Total_Generation_per_year = [..."/
+LOOP ((Y), PUT SUM((P),Generation(Y,P)):15:1/)
+PUT "];"/;
+
+
+
 PUT "TOTCOST = [..."/;
 *LOOP((R), PUT ORD(R):6:0  TOTCOST.L(R):20:6/)
 PUT ORD(Y):6:0  TOTCOST.L(Y):20:6/)
 PUT "];"/;
-$ontext
+
 PUT "#MaxBiomass = [..."/;
 PUT SUM((S,RM),availableBiomass(S,RM)):15:1/
 PUT "];"/;
 
-PUT "Generation_total = [..."/;
-PUT SUM((P),Demand(P)):15:1/
-PUT "];"/;
-
-
-PUT "PlantNumberPerType = [..."/;
-LOOP((Tech), PUT ORD(Tech):6:0 SUM((P),UP.L(P,Tech)):15:1/)
-PUT "];"/;
-*
 
 PUT "EmissionReduction = [..."/
 PUT (sum(P,EmFoscoal(P)*Demand(P))-sum(R,TOTEMISSIONS.L(R))) :20:6/
@@ -529,10 +546,6 @@ PUT "CostFossil = [..."/;
 LOOP((P), PUT ORD(P):6:0 (Demand(P)*(1-sum(tech,UP.L(P,Tech)))*LCOECoal(P)):15:1/)
 PUT "];"/;
 
-PUT "Plants = [..."/;
-LOOP((P,Tech), PUT ORD(P):6:0 PUT ORD(Tech):6:0 UP.L(P,Tech):15:1/)
-PUT "];"/;
-
 PUT "Emission cost = [..."/;
 LOOP((R), PUT ORD(R):6:0  (TOTEMISSIONS.L(R)* carbonprice(R)):20:6/)
 PUT "];"/;
@@ -541,26 +554,27 @@ PUT "Carbon price = [..."/;
 LOOP((R), PUT ORD(R):6:0  carbonprice(R):20:6/)
 PUT "];"/;
 
-*
-$offtext
 
 FILE resultBSP/
-$include txt_file_beaver/result-BSP.txt
+*$include txt_file_beaver/result-BSP.txt
 /;
 
 PUT resultBSP/;
 LOOP((S,RM), PUT ORD(S):6:0 PUT ORD(RM):6:0 SUM((P,Tech), BSP.L(S,RM,P,Tech)):20:6/)
 
 FILE resultPlant/
-$include txt_file_beaver/result-plant.txt
+*$include txt_file_beaver/result-plant.txt
 /;
 
 PUT resultPlant/;
 LOOP((P,Tech), PUT P.tl PUT ORD(P):6:0 PUT ORD(Tech):6:0 UP.L(P,Tech):15:1/)
 
 FILE resultemission/
-$include txt_file_beaver/result-emission.txt
+*$include txt_file_beaver/result-emission.txt
 /;
+
 PUT resultemission/
 SUM (R,TOTEMISSIONS.L(R)):20:6/
+
+$offtext
 

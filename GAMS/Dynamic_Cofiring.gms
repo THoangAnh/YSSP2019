@@ -67,18 +67,22 @@ $include txt_file_beaver/parameter-power-capacity.txt
 parameter Generation(Y,P) /
 $include txt_file_beaver/parameter-power-generation.txt
 /;
+* unit_Generation_GWh
 
 parameter coalPrice(Y,P) /
 $include txt_file_beaver/parameter-coal-price.txt
 /;
+* unit coalPrice_$/GWh (GWh is converted from J of coal_energy)
 
 parameter InvestmentCoal(Y,P) /
 $include txt_file_beaver/parameter-investment-coal-plant.txt
 /;
+* unit InvestmentCoal_$/GWh (GWh is electricity generation)
 
 parameter CostIOMCoal(Y,P) /
 $include txt_file_beaver/parameter-cost-IOM-coal.txt
 /;
+*unit CostIOMCoal_$/GWh (GWh is electricity generation)
 
 ****** BIOMASS ******
 
@@ -89,6 +93,7 @@ $include txt_file_beaver/parameter-potential-biomass.txt
 parameter BiomPrice(Y,S,RM)/
 $include txt_file_beaver/parameter-biomass_price.txt
 /;
+* unit BiomPrice_$/PJ
 
 ****** CO_FIRING ******
 
@@ -99,6 +104,7 @@ $include txt_file_beaver/parameter-CRF-cofiring.txt
 parameter SpecificCostCofir(Y,P,Tech) /
 $include txt_file_beaver/parameter-specific-cost-cofiring.txt
 /;
+* unit SpecificCostCofir_$/MWelec
 
 parameter FixOMCostCofir(Y,P,Tech) /
 $include txt_file_beaver/parameter-fix-OM-cost-cofiring.txt
@@ -125,14 +131,17 @@ $include txt_file_beaver/parameter-efficiency-cofiring.txt
 parameter transDistSupplyPlant(S,P,T) /
 $include txt_file_beaver/parameter-distance-supply-plant.txt
 /;
+* unit transDistSupplyPlant_km
 
 parameter tranBiofix(Y,RM,T) /
 $include txt_file_beaver/parameter-transport-fix-cost.txt
 /;
+* unit tranBiofix_$/PJ/km (PJ is expressed by biomass raw energy)
 
 parameter tranBiovar(Y,RM,T)/
 $include txt_file_beaver/parameter-transport-var-cost.txt
 /;
+* unit tranBiovar_$/PJ/km (PJ is expressed by biomass raw energy)
 
 ****** EMISSIONS ******
 
@@ -157,7 +166,7 @@ binary variable
 UP(Y,P,Tech)
 
 positive variables
-BSP(Y,S,RM,P,Tech)                       Amount of biomass used in the coal plant (unit )
+BSP(Y,S,RM,P,Tech)                       Amount of biomass used in the coal plant (unit_PJ)
 
 CoalProductionCost(Y,P)                  Production cost of electricity from coal power plant
 CofirProductionCost(Y,P,Tech)            Production cost of electricity from co-firing power plant
@@ -166,12 +175,12 @@ AvailableBiomass(Y,S,RM)                 Biomass available to be used for each y
 
 CostBMTransport(Y,P,S,RM,T,Tech)         Cost of transporting the biomass
 CostBio(Y,P,RM,Tech)                     Cost of biomass
-CostFossil(Y,P)                          Cost related to coal for electricity production
+CostFossil(Y,P)                          Cost related to coal for electricity production (unit_$)
 
 EmissionBMTransport(Y,P,S,T,Tech)        Emissions from transport of biomass
 EmissionProduction(Y,P,Tech)             Emission from production
 
-ElBio(Y,P,Tech)                          Electricity from biomass in co-firing configuration
+ElBio(Y,P,Tech)                          Electricity from biomass in co-firing configuration (unit_GWh)
 
 variable
 COMBINEEQUATIONS
@@ -275,8 +284,6 @@ TotalCosteq(Y)..
 
 ****** BIOMASS TRANSPORT EMISSIONS ******
 
-*transportBMEmission(Y,P,S,T,Tech)..EmissionBMTransport(Y,P,S,T,Tech) =E= SUM(RM $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and UP(Y,P,Tech)),(transEmissionBiomass(RM,T)*transDistSupplyPlant(S,P,T)*BSP(Y,S,RM,P,Tech)));
-
 transportBMEmission(Y,P,S,T,Tech)..
          EmissionBMTransport(Y,P,S,T,Tech) =E=
          SUM(RM $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech)),
@@ -317,7 +324,8 @@ combine..
 ******------ BIOMASS AVAILIBILITY ------******
 
 availabilityBM(Y,S,RM)..
-AvailableBiomass(Y,S,RM) =E=  BiomassPotential(Y,S,RM)$(ORD(Y) eq 1) - SUM((P,Tech,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech)),BSP(Y-1,S,RM,P,Tech))$(ORD(Y) gt 1);
+AvailableBiomass(Y,S,RM) =E=  BiomassPotential(Y,S,RM)$(ORD(Y) eq 1) + BiomassPotential(Y,S,RM)$(ORD(Y) gt 1) - SUM((P,Tech,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech)),BSP(Y-1,S,RM,P,Tech))$(ORD(Y) gt 1);
+
 
 ******------ BIOMASS USED FOR POWER PLANTS ------******
 
@@ -390,7 +398,7 @@ SOLVE facilityLocation USING MIP MINIMIZING COMBINEEQUATIONS;
 * ------------------------------------------------------------------------------
 * ------------------------------------------------------------------------------
 *
-$ontext
+
 FILE resultFile/
 *$include txt_file_beaver/file-solution.txt
 //;
@@ -421,7 +429,11 @@ PUT "np.Total_Generation_per_year = [..."/
 LOOP ((Y), PUT SUM((P),Generation(Y,P)):15:1/)
 PUT "];"/;
 
+PUT "TotalBiomassused = [..."/;
+LOOP((Y),PUT SUM((P,S,RM,Tech,T)$transDistSupplyPlant(S,P,T), BSP.L(Y,S,RM,P,Tech)):20:6/)
+PUT "];"/;
 
+$ontext
 
 PUT "TOTCOST = [..."/;
 *LOOP((R), PUT ORD(R):6:0  TOTCOST.L(R):20:6/)
@@ -490,9 +502,7 @@ PUT "Biomassused = [..."/;
 LOOP((S,RM), PUT ORD(S):6:0 PUT ORD(RM):6:0 SUM((P,Tech), BSP.L(S,RM,P,Tech)):20:6/)
 PUT "];"/;
 
-PUT "TotalBiomassused = [..."/;
-PUT SUM((P,S,RM,Tech)$transDistSupplyPlant(S,P), BSP.L(S,RM,P,Tech)):20:6/
-PUT "];"/;
+
 
 PUT "Biomassusedfor direct co-feed cofiring = [..."/;
 PUT  SUM((P,S,RM,Tech)$(transDistSupplyPlant(S,P)and ord (tech) eq 1 ), BSP.L(S,RM,P,'Tech1')):20:6/

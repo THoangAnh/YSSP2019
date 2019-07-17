@@ -6,29 +6,33 @@
 [RP:COFIREDYNRECEMT]
 1=
 
-[OPENWINDOW_1]
-MAXIM=0
-TOP=2
-LEFT=6
-HEIGHT=925
-WIDTH=1740
-
-[RP:BECCS_DYN]
+[RP:COFIREDYNREC]
 1=
 
-[RP:COFIREDYNREC]
+[RP:EQUATIONS]
+1=
+
+[RP:BECCS_DYN]
 1=
 
 [RP:DYNAMIC_COFIRING]
 1=
 
 [MRUFILES]
-1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.gms
-2=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\cofireDynRec.gms
-3=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.lst
+1=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\BECCS_Dyn.gms
+2=P:\beaver\Arif\Malaysia\Equations.gms
+3=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\cofireDynRec.gms
 4=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\cplex.opt
-5=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\BECCS_Dyn.gms
-6=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\gams2.put
-7=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\gams3.put
-8=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\txt_file_beaver/parameter-biomass_price.txt
-9=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\txt_file_beaver/parameter-potential-biomass.txt
+5=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\gams2.put
+6=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\gams3.put
+7=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\txt_file_beaver/parameter-biomass_price.txt
+
+[OPENWINDOW_1]
+FILE0=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.gms
+FILE1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.lst
+FILE2=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.gms
+MAXIM=0
+TOP=2
+LEFT=6
+HEIGHT=925
+WIDTH=1090

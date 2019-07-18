@@ -233,7 +233,7 @@ ElBioMinConstraint(Y,P,Tech)
 ****** COAL COST FOR NORMAL COAL OR CO-FIRING CONFIGURATION ******
 
 FossilCost(Y,P)..
-         CostFossil(Y,P) =E= SUM((Tech) $(YP(Y,P)),coalPrice(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech))/EffCoal(P));
+         CostFossil(Y,P) =E= SUM((Tech) $(YP(Y,P)),coalPrice(Y,P)*(Generation(Y,P)/EffCoal(P)*(1-UP(Y,P,Tech)) + Generation(Y,P)/EffCof(Tech)*UP(Y,P,Tech) - ElBio(Y,P,Tech)/EffCoal(P)));
 *recheck efficiency
 
 ****** BIOMASS COST FOR CO-FIRING CONFIGURATION ******

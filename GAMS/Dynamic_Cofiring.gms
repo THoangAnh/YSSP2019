@@ -48,6 +48,10 @@ set YP(Y,P) year plant relation /
 $include txt_file_beaver/set-year-plant-relation.txt
 /;
 
+set SRM(Y,S,RM) year supply raw material relation /
+$include txt_file_beaver/set-year-supply-raw-material-relation.txt
+/;
+
 * ------------------------------------------------------------------------------
 *                                - PARAMETERS -
 * ------------------------------------------------------------------------------
@@ -235,13 +239,13 @@ FossilCost(Y,P)..
 ****** BIOMASS COST FOR CO-FIRING CONFIGURATION ******
 
 BiomassCost(Y,P,RM,Tech)..
-         CostBio(Y,P,RM,Tech) =E= SUM((S,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P)),BiomPrice(Y,S,RM)*BSP(Y,S,RM,P,Tech));
+         CostBio(Y,P,RM,Tech) =E= SUM((S,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BiomPrice(Y,S,RM)*BSP(Y,S,RM,P,Tech));
 
 
 ****** BIOMASS TRANSPORT COST TO PLANTS ******
 
 biomassTransportSPCost(Y,P,S,RM,T,Tech)..
-         CostBMTransport(Y,P,S,RM,T,Tech) =E= (transDistSupplyPlant(S,P,T)*(tranBiovar(Y,RM,T) + tranBiofix(Y,RM,T))*BSP(Y,S,RM,P,Tech)) $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P));
+         CostBMTransport(Y,P,S,RM,T,Tech) =E= ((transDistSupplyPlant(S,P,T)*tranBiovar(Y,RM,T) + tranBiofix(Y,RM,T))*BSP(Y,S,RM,P,Tech)) $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM));
 
 
 ****** PRODUCTION COST ******
@@ -290,7 +294,7 @@ TotalCosteq(Y)..
 
 transportBMEmission(Y,P,S,T,Tech)..
          EmissionBMTransport(Y,P,S,T,Tech) =E=
-         SUM(RM $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P)),
+         SUM(RM $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),
          (transEmissionBiomass(RM,T)*transDistSupplyPlant(S,P,T)*BSP(Y,S,RM,P,Tech)));
 
 
@@ -327,20 +331,20 @@ combine..
 
 ******------ BIOMASS AVAILIBILITY ------******
 
-availabilityBM(Y,S,RM)..
+availabilityBM(Y,S,RM) $(SRM(Y,S,RM))..
 AvailableBiomass(Y,S,RM) =E=  (BiomassPotential(Y,S,RM)$(ORD(Y) eq 1) + BiomassPotential(Y,S,RM)$(ORD(Y) gt 1) - SUM((P,Tech,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P)),BSP(Y-1,S,RM,P,Tech))$(ORD(Y) gt 1));
 
 
 ******------ BIOMASS USED FOR POWER PLANTS ------******
 
 supplyBiomass(Y,S,RM)..
-         SUM((P,Tech,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P)),BSP(Y,S,RM,P,Tech))
+         SUM((P,Tech,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BSP(Y,S,RM,P,Tech))
          =L= AvailableBiomass(Y,S,RM);
 
 ******------ ELCTRICITY PRODUCED FROM BIOMASS  ------******
 
 ElectricityBiomass(Y,P,Tech)..
-         SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P)),EffCof(Tech)*BSP(Y,S,RM,P,Tech))
+         SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),EffCof(Tech)*BSP(Y,S,RM,P,Tech))
          =E= ElBio(Y,P,Tech);
 
 ******------ TECHNOLOGIES ------******
@@ -359,10 +363,10 @@ plantTypeRestriction(Y,P) $(YP(Y,P))..
 * Contraints on max and min biomass
 
 ElBioMaxConstraint(Y,P,Tech)..
-          SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P)),ElBio(Y,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P)*UP(Y,P,Tech);
+          SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 ElBioMinConstraint(Y,P,Tech)..
-         SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P)),ElBio(Y,P,Tech)) =G= UrateLow(tech)*Generation(Y,P)*UP(Y,P,Tech);
+         SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,P,Tech)) =G= UrateLow(tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 
 * ------------------------------------------------------------------------------
@@ -403,6 +407,7 @@ SOLVE facilityLocation USING MIP MINIMIZING COMBINEEQUATIONS;
 * ------------------------------------------------------------------------------
 *
 
+$ontext
 FILE resultFile/
 *$include txt_file_beaver/file-solution.txt
 //;
@@ -437,7 +442,6 @@ PUT "TotalBiomassused = [..."/;
 LOOP((Y),PUT SUM((P,S,RM,Tech,T)$transDistSupplyPlant(S,P,T), BSP.L(Y,S,RM,P,Tech)):20:6/)
 PUT "];"/;
 
-$ontext 
 
 PUT "TOTCOST = [..."/;
 *LOOP((R), PUT ORD(R):6:0  TOTCOST.L(R):20:6/)

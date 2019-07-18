@@ -31,7 +31,7 @@
 FILE0=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.gms
 FILE1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.lst
 FILE2=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.gms
-MAXIM=1
+MAXIM=0
 TOP=2
 LEFT=6
 HEIGHT=925

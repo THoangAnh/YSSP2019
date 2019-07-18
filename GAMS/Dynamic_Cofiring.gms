@@ -71,6 +71,7 @@ $include txt_file_beaver/parameter-efficiency-coal_plant.txt
 parameter Capacity(P) /
 $include txt_file_beaver/parameter-power-capacity.txt
 /;
+* unit_Capacity_MW
 
 parameter Generation(Y,P) /
 $include txt_file_beaver/parameter-power-generation.txt
@@ -85,12 +86,12 @@ $include txt_file_beaver/parameter-coal-price.txt
 parameter InvestmentCoal(Y,P) /
 $include txt_file_beaver/parameter-investment-coal-plant.txt
 /;
-* unit InvestmentCoal_$/GWh (GWh is electricity generation)
+* unit InvestmentCoal_$/GWh (GWh of electricity generation)
 
 parameter CostIOMCoal(Y,P) /
 $include txt_file_beaver/parameter-cost-IOM-coal.txt
 /;
-*unit CostIOMCoal_$/GWh (GWh is electricity generation)
+*unit CostIOMCoal_$/GWh (GWh of electricity generation)
 
 ****** BIOMASS ******
 
@@ -101,7 +102,7 @@ $include txt_file_beaver/parameter-potential-biomass.txt
 parameter BiomPrice(Y,S,RM)/
 $include txt_file_beaver/parameter-biomass_price.txt
 /;
-* unit BiomPrice_$/PJ
+* unit BiomPrice_$/GWh (GWh is converted from J of biomass heat)
 
 ****** CO_FIRING ******
 
@@ -175,6 +176,7 @@ UP(Y,P,Tech)
 
 positive variables
 BSP(Y,S,RM,P,Tech)                       Amount of biomass used in the coal plant (unit_PJ)
+Urate(Y,S,RM,P,Tech)                     Share of biomass (compared to generation)
 
 CoalProductionCost(Y,P)                  Production cost of electricity from coal power plant
 CofirProductionCost(Y,P,Tech)            Production cost of electricity from co-firing power plant
@@ -188,7 +190,7 @@ CostFossil(Y,P)                          Cost related to coal for electricity pr
 EmissionBMTransport(Y,P,S,T,Tech)        Emissions from transport of biomass
 EmissionProduction(Y,P,Tech)             Emission from production
 
-ElBio(Y,P,Tech)                          Electricity from biomass in co-firing configuration (unit_GWh)
+ElBio(Y,S,RM,P,Tech)                          Electricity from biomass in co-firing configuration (unit_GWh)
 
 variable
 COMBINEEQUATIONS
@@ -199,7 +201,10 @@ TOTEMISSIONSCOST(Y)
 equations
 
 ****** ELECTRICITY PRODUCTIONS ******
-ElectricityBiomass(Y,P,Tech)          Electricity produced from biomass
+ElectricityBiomass(Y,S,RM,P,Tech)          Electricity produced from biomass
+
+****** BIOMASS SHARE ******
+BiomShare(Y,S,RM,P,Tech)              Share of biomass
 
 ****** COSTS ******
 FossilCost(Y,P)
@@ -233,8 +238,8 @@ ElBioMinConstraint(Y,P,Tech)
 ****** COAL COST FOR NORMAL COAL OR CO-FIRING CONFIGURATION ******
 
 FossilCost(Y,P)..
-         CostFossil(Y,P) =E= SUM((Tech) $(YP(Y,P)),coalPrice(Y,P)*(Generation(Y,P)/EffCoal(P)*(1-UP(Y,P,Tech)) + Generation(Y,P)/EffCof(Tech)*UP(Y,P,Tech) - ElBio(Y,P,Tech)/EffCoal(P)));
-*recheck efficiency
+         CostFossil(Y,P) =E= SUM((Tech,S,RM) $(YP(Y,P)),coalPrice(Y,P)*(Generation(Y,P)/EffCoal(P)*(1-UP(Y,P,Tech)) + Generation(Y,P)/EffCof(Tech)*UP(Y,P,Tech) - ElBio(Y,S,RM,P,Tech)/EffCoal(P)));
+
 
 ****** BIOMASS COST FOR CO-FIRING CONFIGURATION ******
 
@@ -261,9 +266,9 @@ ProductionCostCoal(Y,P)  $(YP(Y,P))..
 ******------- PRODUCTION COST FOR CO-FIRING CONFIGURATION ------******
 
 ProductionCostCoFir(Y,P,Tech)..
-         CofirProductionCost(Y,P,Tech) =E= ((InvestmentCoal(Y,P)*Generation(Y,P)*UP(Y,P,Tech)+ SpecificCostCofir(Y,P,Tech)*ElBio(Y,P,Tech)/Generation(Y,P)*Capacity(P))*CRFCofir(P)
+         CofirProductionCost(Y,P,Tech) =E= SUM((S,RM) $(YP(Y,P)),((InvestmentCoal(Y,P)*Generation(Y,P)*UP(Y,P,Tech)+ SpecificCostCofir(Y,P,Tech)*Urate(Y,S,RM,P,Tech)*Capacity(P))*CRFCofir(P)
                                            + FixOMCostCofir(Y,P,Tech)*Capacity(P)*UP(Y,P,Tech)
-                                           + VarOMCostCofir(Y,P,Tech)*Generation(Y,P)*UP(Y,P,Tech)) $(YP(Y,P));
+                                           + VarOMCostCofir(Y,P,Tech)*Generation(Y,P)*UP(Y,P,Tech)));
 
 *ProductionCostCoFir(Y,P,Tech)..
 *CofirProductionCost(Y,P,Tech) =E= ((InvestmentCoal(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech))+ SpecificCostCofir(Y,P,Tech)*ElBio(Y,P,Tech)/Generation(Y,P)*Capacity(P))*CRFCofir(P)
@@ -302,7 +307,7 @@ transportBMEmission(Y,P,S,T,Tech)..
 
 ProductionEmission(Y,P,Tech)..
          EmissionProduction(Y,P,Tech) =E=
-         SUM((RM),EmFoscoal(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech))) $(YP(Y,P));
+         SUM((S,RM),EmFoscoal(Y,P)*(Generation(Y,P)-ElBio(Y,S,RM,P,Tech))) $(YP(Y,P));
 ** Check if emission from coal is expressed by coal heat energy or electricity. If by coal energy, should add Eff_coal
 
 
@@ -343,9 +348,14 @@ supplyBiomass(Y,S,RM)..
 
 ******------ ELCTRICITY PRODUCED FROM BIOMASS  ------******
 
-ElectricityBiomass(Y,P,Tech)..
-         SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),EffCof(Tech)*BSP(Y,S,RM,P,Tech))
-         =E= ElBio(Y,P,Tech);
+ElectricityBiomass(Y,S,RM,P,Tech)..
+         SUM((T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),EffCof(Tech)*BSP(Y,S,RM,P,Tech))
+         =E= ElBio(Y,S,RM,P,Tech);
+
+******------ BIOMASS SHARE ------******
+
+BiomShare(Y,S,RM,P,Tech)..
+         Urate(Y,S,RM,P,Tech) =E= (ElBio(Y,S,RM,P,Tech)/Generation(Y,P)) $(YP(Y,P) and SRM(Y,S,RM));
 
 ******------ TECHNOLOGIES ------******
 
@@ -363,10 +373,10 @@ plantTypeRestriction(Y,P) $(YP(Y,P))..
 * Contraints on max and min biomass
 
 ElBioMaxConstraint(Y,P,Tech)..
-          SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P)*UP(Y,P,Tech);
+          SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 ElBioMinConstraint(Y,P,Tech)..
-         SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,P,Tech)) =G= UrateLow(tech)*Generation(Y,P)*UP(Y,P,Tech);
+         SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =G= UrateLow(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 
 * ------------------------------------------------------------------------------

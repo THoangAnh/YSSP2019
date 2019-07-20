@@ -66,8 +66,6 @@ parameter EffCoal(P)/
 $include txt_file_beaver/parameter-efficiency-coal_plant.txt
 /;
 
-****** COAL ******
-
 parameter Capacity(P) /
 $include txt_file_beaver/parameter-power-capacity.txt
 /;
@@ -78,11 +76,6 @@ $include txt_file_beaver/parameter-power-generation.txt
 /;
 * unit_Generation_GWh
 
-parameter coalPrice(Y,P) /
-$include txt_file_beaver/parameter-coal-price.txt
-/;
-* unit coalPrice_$/GWh (GWh is converted from J of coal_energy)
-
 parameter InvestmentCoal(Y,P) /
 $include txt_file_beaver/parameter-investment-coal-plant.txt
 /;
@@ -92,6 +85,15 @@ parameter CostIOMCoal(Y,P) /
 $include txt_file_beaver/parameter-cost-IOM-coal.txt
 /;
 *unit CostIOMCoal_$/GWh (GWh of electricity generation)
+
+
+****** COAL ******
+
+parameter coalPrice(Y,P) /
+$include txt_file_beaver/parameter-coal-price.txt
+/;
+* unit coalPrice_$/GWh (GWh is converted from J of coal_energy)
+
 
 ****** BIOMASS ******
 
@@ -266,7 +268,7 @@ ProductionCostCoal(Y,P)  $(YP(Y,P))..
 ******------- PRODUCTION COST FOR CO-FIRING CONFIGURATION ------******
 
 ProductionCostCoFir(Y,P,Tech)..
-         CofirProductionCost(Y,P,Tech) =E= SUM((S,RM) $(YP(Y,P)),((InvestmentCoal(Y,P)*Generation(Y,P)*UP(Y,P,Tech)+ SpecificCostCofir(Y,P,Tech)*Urate(Y,S,RM,P,Tech)*Capacity(P))*CRFCofir(P)
+         CofirProductionCost(Y,P,Tech) =E= SUM((S,RM) $(YP(Y,P) and SRM(Y,S,RM)),((InvestmentCoal(Y,P)*Generation(Y,P)*UP(Y,P,Tech)+ SpecificCostCofir(Y,P,Tech)*Urate(Y,S,RM,P,Tech)*Capacity(P))*CRFCofir(P)
                                            + FixOMCostCofir(Y,P,Tech)*Capacity(P)*UP(Y,P,Tech)
                                            + VarOMCostCofir(Y,P,Tech)*Generation(Y,P)*UP(Y,P,Tech)));
 
@@ -307,8 +309,7 @@ transportBMEmission(Y,P,S,T,Tech)..
 
 ProductionEmission(Y,P,Tech)..
          EmissionProduction(Y,P,Tech) =E=
-         SUM((S,RM),EmFoscoal(Y,P)*(Generation(Y,P)-ElBio(Y,S,RM,P,Tech))) $(YP(Y,P));
-** Check if emission from coal is expressed by coal heat energy or electricity. If by coal energy, should add Eff_coal
+         SUM((S,RM),EmFoscoal(Y,P)*(Generation(Y,P)/EffCoal(P)*(1-UP(Y,P,Tech)) + Generation(Y,P)/EffCof(Tech)*UP(Y,P,Tech) - ElBio(Y,S,RM,P,Tech)/EffCoal(P))) $(YP(Y,P));
 
 
 totalEmissions(Y)..

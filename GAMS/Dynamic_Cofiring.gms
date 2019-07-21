@@ -139,7 +139,7 @@ $include txt_file_beaver/parameter-efficiency-cofiring.txt
 
 ****** TRANSPORT ******
 
-parameter transDistSupplyPlant(S,P,T) /
+parameter transDistSupplyPlant(Y,S,P,T) /
 $include txt_file_beaver/parameter-distance-supply-plant.txt
 /;
 * unit transDistSupplyPlant_km
@@ -246,13 +246,13 @@ FossilCost(Y,P)..
 ****** BIOMASS COST FOR CO-FIRING CONFIGURATION ******
 
 BiomassCost(Y,P,RM,Tech)..
-         CostBio(Y,P,RM,Tech) =E= SUM((S,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BiomPrice(Y,S,RM)*BSP(Y,S,RM,P,Tech));
+         CostBio(Y,P,RM,Tech) =E= SUM((S,T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BiomPrice(Y,S,RM)*BSP(Y,S,RM,P,Tech));
 
 
 ****** BIOMASS TRANSPORT COST TO PLANTS ******
 
 biomassTransportSPCost(Y,P,S,RM,T,Tech)..
-         CostBMTransport(Y,P,S,RM,T,Tech) =E= ((transDistSupplyPlant(S,P,T)*tranBiovar(Y,RM,T) + tranBiofix(Y,RM,T))*BSP(Y,S,RM,P,Tech)) $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM));
+         CostBMTransport(Y,P,S,RM,T,Tech) =E= ((transDistSupplyPlant(Y,S,P,T)*tranBiovar(Y,RM,T) + tranBiofix(Y,RM,T))*BSP(Y,S,RM,P,Tech)) $(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM));
 
 
 ****** PRODUCTION COST ******
@@ -301,8 +301,8 @@ TotalCosteq(Y)..
 
 transportBMEmission(Y,P,S,T,Tech)..
          EmissionBMTransport(Y,P,S,T,Tech) =E=
-         SUM(RM $(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),
-         (transEmissionBiomass(RM,T)*transDistSupplyPlant(S,P,T)*BSP(Y,S,RM,P,Tech)));
+         SUM(RM $(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),
+         (transEmissionBiomass(RM,T)*transDistSupplyPlant(Y,S,P,T)*BSP(Y,S,RM,P,Tech)));
 
 
 ****** PRODUCTION EMISSIONS FROM COAL ******
@@ -338,19 +338,19 @@ combine..
 ******------ BIOMASS AVAILIBILITY ------******
 
 availabilityBM(Y,S,RM) $(SRM(Y,S,RM))..
-AvailableBiomass(Y,S,RM) =E=  (BiomassPotential(Y,S,RM)$(ORD(Y) eq 1) + BiomassPotential(Y,S,RM)$(ORD(Y) gt 1) - SUM((P,Tech,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P)),BSP(Y-1,S,RM,P,Tech))$(ORD(Y) gt 1));
+AvailableBiomass(Y,S,RM) =E=  (BiomassPotential(Y,S,RM)$(ORD(Y) eq 1) + BiomassPotential(Y,S,RM)$(ORD(Y) gt 1) - SUM((P,Tech,T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P)),BSP(Y-1,S,RM,P,Tech))$(ORD(Y) gt 1));
 
 
 ******------ BIOMASS USED FOR POWER PLANTS ------******
 
 supplyBiomass(Y,S,RM)..
-         SUM((P,Tech,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BSP(Y,S,RM,P,Tech))
+         SUM((P,Tech,T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BSP(Y,S,RM,P,Tech))
          =L= AvailableBiomass(Y,S,RM);
 
 ******------ ELCTRICITY PRODUCED FROM BIOMASS  ------******
 
 ElectricityBiomass(Y,S,RM,P,Tech)..
-         SUM((T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),EffCof(Tech)*BSP(Y,S,RM,P,Tech))
+         SUM((T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),EffCof(Tech)*BSP(Y,S,RM,P,Tech))
          =E= ElBio(Y,S,RM,P,Tech);
 
 ******------ BIOMASS SHARE ------******
@@ -374,10 +374,10 @@ plantTypeRestriction(Y,P) $(YP(Y,P))..
 * Contraints on max and min biomass
 
 ElBioMaxConstraint(Y,P,Tech)..
-          SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P)*UP(Y,P,Tech);
+          SUM((S,RM,T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 ElBioMinConstraint(Y,P,Tech)..
-         SUM((S,RM,T)$(transDistSupplyPlant(S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =G= UrateLow(Tech)*Generation(Y,P)*UP(Y,P,Tech);
+         SUM((S,RM,T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =G= UrateLow(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 
 * ------------------------------------------------------------------------------

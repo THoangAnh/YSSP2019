@@ -133,7 +133,7 @@ parameter UrateLow(Tech)/
 $include txt_file_beaver/parameter-utilization-rate-low.txt
 /;
 
-parameter EffCof(Tech)/
+parameter EffCof(P,Tech)/
 $include txt_file_beaver/parameter-efficiency-cofiring.txt
 /;
 
@@ -240,7 +240,7 @@ ElBioMinConstraint(Y,P,Tech)
 ****** COAL COST FOR NORMAL COAL OR CO-FIRING CONFIGURATION ******
 
 FossilCost(Y,P)..
-         CostFossil(Y,P) =E= SUM((Tech,S,RM) $(YP(Y,P)),coalPrice(Y,P)*(Generation(Y,P)/EffCoal(P)*(1-UP(Y,P,Tech)) + Generation(Y,P)/EffCof(Tech)*UP(Y,P,Tech) - ElBio(Y,S,RM,P,Tech)/EffCoal(P)));
+         CostFossil(Y,P) =E= SUM((Tech,S,RM) $(YP(Y,P)),coalPrice(Y,P)*(Generation(Y,P)/EffCoal(P)*(1-UP(Y,P,Tech)) + Generation(Y,P)/EffCof(P,Tech)*UP(Y,P,Tech) - ElBio(Y,S,RM,P,Tech)/EffCoal(P)));
 
 
 ****** BIOMASS COST FOR CO-FIRING CONFIGURATION ******
@@ -309,7 +309,7 @@ transportBMEmission(Y,P,S,T,Tech)..
 
 ProductionEmission(Y,P,Tech)..
          EmissionProduction(Y,P,Tech) =E=
-         SUM((S,RM),EmFoscoal(Y,P)*(Generation(Y,P)/EffCoal(P)*(1-UP(Y,P,Tech)) + Generation(Y,P)/EffCof(Tech)*UP(Y,P,Tech) - ElBio(Y,S,RM,P,Tech)/EffCoal(P))) $(YP(Y,P));
+         SUM((S,RM),EmFoscoal(Y,P)*(Generation(Y,P)/EffCoal(P)*(1-UP(Y,P,Tech)) + Generation(Y,P)/EffCof(P,Tech)*UP(Y,P,Tech) - ElBio(Y,S,RM,P,Tech)/EffCoal(P))) $(YP(Y,P));
 
 
 totalEmissions(Y)..
@@ -350,7 +350,7 @@ supplyBiomass(Y,S,RM)..
 ******------ ELCTRICITY PRODUCED FROM BIOMASS  ------******
 
 ElectricityBiomass(Y,S,RM,P,Tech)..
-         SUM((T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),EffCof(Tech)*BSP(Y,S,RM,P,Tech))
+         SUM((T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),EffCof(P,Tech)*BSP(Y,S,RM,P,Tech))
          =E= ElBio(Y,S,RM,P,Tech);
 
 ******------ BIOMASS SHARE ------******

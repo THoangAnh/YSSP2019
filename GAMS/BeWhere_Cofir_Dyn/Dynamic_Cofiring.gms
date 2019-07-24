@@ -139,7 +139,7 @@ $include txt_file_beaver/parameter-efficiency-cofiring.txt
 
 ****** TRANSPORT ******
 
-parameter transDistSupplyPlant(Y,S,P,T) /
+parameter transDistSupplyPlant(Y,RM,S,P,T) /
 $include txt_file_beaver/parameter-distance-supply-plant.txt
 /;
 * unit transDistSupplyPlant_km
@@ -177,7 +177,7 @@ binary variable
 UP(Y,P,Tech)
 
 positive variables
-BSP(Y,S,RM,P,Tech)                       Amount of biomass used in the coal plant (unit_PJ)
+BSP(Y,S,RM,P,Tech)                       Amount of biomass used in the coal plant (unit_GWh heat)
 Urate(Y,S,RM,P,Tech)                     Share of biomass (compared to generation)
 
 CoalProductionCost(Y,P)                  Production cost of electricity from coal power plant
@@ -246,13 +246,13 @@ FossilCost(Y,P)..
 ****** BIOMASS COST FOR CO-FIRING CONFIGURATION ******
 
 BiomassCost(Y,P,RM,Tech)..
-         CostBio(Y,P,RM,Tech) =E= SUM((S,T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BiomPrice(Y,S,RM)*BSP(Y,S,RM,P,Tech));
+         CostBio(Y,P,RM,Tech) =E= SUM((S)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BiomPrice(Y,S,RM)*BSP(Y,S,RM,P,Tech));
 
 
 ****** BIOMASS TRANSPORT COST TO PLANTS ******
 
 biomassTransportSPCost(Y,P,S,RM,T,Tech)..
-         CostBMTransport(Y,P,S,RM,T,Tech) =E= ((transDistSupplyPlant(Y,S,P,T)*tranBiovar(Y,RM,T) + tranBiofix(Y,RM,T))*BSP(Y,S,RM,P,Tech)) $(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM));
+         CostBMTransport(Y,P,S,RM,T,Tech) =E= ((transDistSupplyPlant(Y,RM,S,P,T)*tranBiovar(Y,RM,T) + tranBiofix(Y,RM,T))*BSP(Y,S,RM,P,Tech)) $(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM));
 
 
 ****** PRODUCTION COST ******
@@ -301,8 +301,8 @@ TotalCosteq(Y)..
 
 transportBMEmission(Y,P,S,T,Tech)..
          EmissionBMTransport(Y,P,S,T,Tech) =E=
-         SUM(RM $(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),
-         (transEmissionBiomass(RM,T)*transDistSupplyPlant(Y,S,P,T)*BSP(Y,S,RM,P,Tech)));
+         SUM(RM $(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),
+         (transEmissionBiomass(RM,T)*transDistSupplyPlant(Y,RM,S,P,T)*BSP(Y,S,RM,P,Tech)));
 
 
 ****** PRODUCTION EMISSIONS FROM COAL ******
@@ -338,19 +338,19 @@ combine..
 ******------ BIOMASS AVAILIBILITY ------******
 
 availabilityBM(Y,S,RM) $(SRM(Y,S,RM))..
-AvailableBiomass(Y,S,RM) =E=  (BiomassPotential(Y,S,RM)$(ORD(Y) eq 1) + BiomassPotential(Y,S,RM)$(ORD(Y) gt 1) - SUM((P,Tech,T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P)),BSP(Y-1,S,RM,P,Tech))$(ORD(Y) gt 1));
+AvailableBiomass(Y,S,RM) =E=  (BiomassPotential(Y,S,RM)$(ORD(Y) eq 1) + BiomassPotential(Y,S,RM)$(ORD(Y) gt 1) - SUM((P,Tech,T)$(SRM(Y,S,RM) and RMTe(RM,Tech) and YP(Y,P)),BSP(Y-1,S,RM,P,Tech))$(ORD(Y) gt 1));
 
 
 ******------ BIOMASS USED FOR POWER PLANTS ------******
 
 supplyBiomass(Y,S,RM)..
-         SUM((P,Tech,T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BSP(Y,S,RM,P,Tech))
+         SUM((P,Tech,T)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BSP(Y,S,RM,P,Tech))
          =L= AvailableBiomass(Y,S,RM);
 
 ******------ ELCTRICITY PRODUCED FROM BIOMASS  ------******
 
 ElectricityBiomass(Y,S,RM,P,Tech)..
-         SUM((T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),EffCof(P,Tech)*BSP(Y,S,RM,P,Tech))
+         SUM((T)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),EffCof(P,Tech)*BSP(Y,S,RM,P,Tech))
          =E= ElBio(Y,S,RM,P,Tech);
 
 ******------ BIOMASS SHARE ------******
@@ -374,10 +374,10 @@ plantTypeRestriction(Y,P) $(YP(Y,P))..
 * Contraints on max and min biomass
 
 ElBioMaxConstraint(Y,P,Tech)..
-          SUM((S,RM,T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P)*UP(Y,P,Tech);
+          SUM((S,RM)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 ElBioMinConstraint(Y,P,Tech)..
-         SUM((S,RM,T)$(transDistSupplyPlant(Y,S,P,T) and RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =G= UrateLow(Tech)*Generation(Y,P)*UP(Y,P,Tech);
+         SUM((S,RM)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =G= UrateLow(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 
 * ------------------------------------------------------------------------------
@@ -419,10 +419,10 @@ SOLVE facilityLocation USING RMIP MINIMIZING COMBINEEQUATIONS;
 *
 
 
-$ontext
+
 
 FILE resultFile/
-#$include txt_file_beaver/file-solution.txt
+$include txt_file_beaver/file-solution.txt
 //;
 
 PUT resultFile;
@@ -444,167 +444,41 @@ PUT "%---- Main numbers ----"/;
 *
 
 PUT "np.Plants = ["/
-LOOP((Y,Tech), PUT "[" ORD(Y):6:0"," PUT ORD(Tech):6:0"," SUM(P,UP.L(Y,P,Tech)):15:1"],"/)
+LOOP((Y,P), PUT "[" ORD(Y):6:0"," PUT ORD(P):6:0"," SUM(Tech,UP.L(Y,P,Tech)):15:1"],"/)
 PUT "]"/;
 
-PUT "np.Total_Generation_per_year = [..."/
-LOOP ((Y), PUT SUM((P),Generation(Y,P)):15:1/)
-PUT "];"/;
+PUT "np.BSP_GWh_heat = ["/
+LOOP((Y,P), PUT "[" ORD(Y):6:0"," PUT ORD(P):6:0"," SUM((RM,S,Tech),BSP.L(Y,S,RM,P,Tech)):15:6"],"/)
+PUT "]"/;
 
-PUT "TotalBiomassused = [..."/;
-LOOP((Y),PUT SUM((P,S,RM,Tech,T)$transDistSupplyPlant(Y,S,P,T), BSP.L(Y,S,RM,P,Tech)):20:6/)
-PUT "];"/;
+PUT "np.ElBio_GWh_elec = ["/
+LOOP((Y,P), PUT "[" ORD(Y):6:0"," PUT ORD(P):6:0"," SUM((RM,S,Tech),ElBio.L(Y,S,RM,P,Tech)):15:6"],"/)
+PUT "]"/;
 
-PUT "TOTCOST = [..."/;
-*LOOP((R), PUT ORD(R):6:0  TOTCOST.L(R):20:6/)
-PUT ORD(Y):6:0  TOTCOST.L(Y):20:6/)
-PUT "];"/;
+PUT "np.Urate = ["/
+LOOP((Y,P), PUT "[" ORD(Y):6:0"," PUT ORD(P):6:0"," SUM((RM,S,Tech),Urate.L(Y,S,RM,P,Tech)):15:6"],"/)
+PUT "]"/;
 
-PUT "#MaxBiomass = [..."/;
-PUT SUM((S,RM),availableBiomass(S,RM)):15:1/
-PUT "];"/;
+PUT "np.TOTCOST_$ = ["/;
+LOOP((Y), PUT "[" ORD(Y):6:0"," TOTCOST.L(Y):20:6"],"/)
+PUT "]"/;
 
+PUT "np.TOTEMISSIONS_tCO2 = ["/;
+LOOP((Y), PUT "[" ORD(Y):6:0"," TOTEMISSIONS.L(Y):20:6"],"/)
+PUT "]"/;
 
-PUT "EmissionReduction = [..."/
-PUT (sum(P,EmFoscoal(P)*Demand(P))-sum(R,TOTEMISSIONS.L(R))) :20:6/
-PUT "];"/;
+PUT "np.TOTEMISSIONSCOST_$ = ["/;
+LOOP((Y), PUT "[" ORD(Y):6:0"," TOTEMISSIONSCOST.L(Y):20:6"],"/)
+PUT "]"/;
 
-PUT "TotalEmissioneq = [..."/
-PUT  Sum(R,TOTEMISSIONS.L(R)):20:6/
-PUT "];"/;
-*
-PUT "BIOMASSEmissioneq = [..."/
-PUT sum((P,Tech),EmissionBMTransport.l(P,Tech)):20:6/
-PUT "];"/
+PUT "np.Emission_coal_combustion _tCO2 = ["/
+LOOP((Y,P), PUT "[" ORD(Y):6:0"," PUT ORD(P):6:0"," SUM((Tech),EmissionProduction.L(Y,P,Tech)):15:6"],"/)
+PUT "]"/;
 
-PUT "Emissiontech = [..."/
-PUT  Sum(P,TechEmission.l(P)):20:6/
-PUT "];"/;
-*
-PUT "EmissionCoal = [..."/
-PUT  Sum(P,CoalEmission.l(P)):20:6/
-PUT "];"/;
-*
-PUT "BaselineEmissionoftheSystem = [..."/
-PUT sum(P,EmFoscoal(P)*Demand(P)):20:6/
-PUT "];"/;
-*
-PUT "ElBio = [..."/
-LOOP(Tech,  PUT ORD(Tech):6:0 PUT sum(P,ElBio.l(P,Tech)):20:6/)
-PUT "];"/;
-*
-PUT "ElecGenCostCofire = [..."/;
-LOOP((Tech), PUT ORD(Tech):6:0 SUM(P,LCOE.l(P)):20:6/)
-PUT "];"/;
-
-PUT "COSTBIOMASS = [..."/
-LOOP(Tech,  PUT ORD(Tech):6:0 SUM((P,RM), CostBio.l(P,RM,Tech)):20:6/)
-PUT "];"/;
-
-PUT "COSTBIOMASStrans = [..."/
-LOOP(Tech,  PUT ORD(Tech):6:0 SUM((P,RM), CostBMTransport.l(P,RM,Tech)):20:6/)
-PUT "];"/;
-
-
-PUT "ElecGenCostCoal = [..."/;
-LOOP((Tech), PUT ORD(Tech):6:0 (SUM((P,R),UP.L(P,Tech)*LCOEcoal(P)*Demand(P))):20:6/)
-PUT "];"/;
-
-PUT "EmissionPLANT = [..."/
-LOOP((P), PUT ORD(P):6:0 (TechEmission.l(P)+ CoalEmission.L(P)+ SUM(TECH,EmissionBMTransport.l(P,Tech))) :20:6/)
-PUT "];"/;
-
-PUT "EMISSIONSFROMcOALeq = [..."/
-LOOP((P), PUT ORD(P):6:0 CoalEmission.L(P):20:6/)
-PUT "];"/;
-
-PUT "Biomassused = [..."/;
-LOOP((S,RM), PUT ORD(S):6:0 PUT ORD(RM):6:0 SUM((P,Tech), BSP.L(S,RM,P,Tech)):20:6/)
-PUT "];"/;
+PUT "np.EmissionBMTransport_tCO2 = ["/
+LOOP((Y,P), PUT "[" ORD(Y):6:0"," PUT ORD(P):6:0"," SUM((S,T,Tech),EmissionBMTransport.L(Y,P,S,T,Tech)):15:6"],"/)
+PUT "]"/;
 
 
 
-PUT "Biomassusedfor direct co-feed cofiring = [..."/;
-PUT  SUM((P,S,RM,Tech)$(transDistSupplyPlant(S,P)and ord (tech) eq 1 ), BSP.L(S,RM,P,'Tech1')):20:6/
-PUT "];"/;
-
-PUT "Biomassusedfor direct separate feed cofiring = [..."/;
-PUT SUM((P,S,RM,Tech)$(transDistSupplyPlant(S,P)and ord (tech) eq 2 ),BSP.L(S,RM,P,'Tech2')):20:6/
-PUT "];"/;
-
-PUT "Biomassusedfor indirect cofiring = [..."/;
-PUT SUM((P,S,RM,Tech)$(transDistSupplyPlant(S,P)and ord (tech) eq 3 ),BSP.L(S,RM,P,'Tech3')):20:6/
-PUT "];"/;
-
-PUT "Biomassusedfor parallel cofiring = [..."/;
-PUT SUM((P,S,RM,Tech)$(transDistSupplyPlant(S,P)and ord (tech) eq 4 ),BSP.L(S,RM,P,'Tech4')):20:6/
-PUT "];"/;
-
-PUT "Biomassused for plant = [..."/;
-LOOP((P, RM), PUT ORD(P):6:0 PUT ORD(RM):6:0 SUM((S,Tech)$transDistSupplyPlant(S,P), BSP.L(S,RM,P,Tech)):20:6/)
-PUT "];"/;
-
-PUT "Biomassratio for plant = [..."/;
-LOOP((P, RM), PUT ORD(P):6:0 PUT ORD(RM):6:0 SUM((S,Tech)$transDistSupplyPlant(S,P),  Eff(P)*BSP.L(S,RM,P,Tech)/Demand(P)):20:6/)
-PUT "];"/;
-
-PUT "CostBio = [..."/;
-PUT SUM((P,Tech,RM),CostBio.L(P,RM,Tech)):15:3/
-PUT "];"/;
-
-PUT "CostBMtrans = [..."/;
-PUT SUM((P,Tech,RM),CostBMTransport.L(P,RM,Tech)):15:3/
-PUT "];"/;
-
-PUT "LCOE = [..."/;
-LOOP ((P), PUT ORD (P):6:0  LCOE.L(P):15:1/)
-PUT "];"/;
-
-PUT "1st term LCOE ="/;
-LOOP ((P), PUT ORD(P):6:0  SUM(TECH, CostIOM(P,Tech)* UP.L(P,Tech)):15:3/)
-PUT "];"/;
-
-PUT "2nd term LCOE ="/;
-LOOP ((P), PUT ORD(P):6:0  ((SUM(TECH,UP.L(P,Tech)* (Demand(P)/Eff(P))) - SUM((S,RM,TECH)$transDistSupplyPlant(S,P),BSP.L(S,RM,P,Tech)))*coalPrice):15:3/)
-PUT "];"/;
-
-PUT "3rd term LCOE ="/;
-LOOP ((P), PUT ORD(P):6:0  SUM((S,RM,Tech)$transDistSupplyPlant(S,P), BSP.L(S,RM,P,Tech)*costBm(S,RM)):20:6/)
-PUT "];"/;
-
-PUT "CostFossil = [..."/;
-LOOP((P), PUT ORD(P):6:0 (Demand(P)*(1-sum(tech,UP.L(P,Tech)))*LCOECoal(P)):15:1/)
-PUT "];"/;
-
-PUT "Emission cost = [..."/;
-LOOP((R), PUT ORD(R):6:0  (TOTEMISSIONS.L(R)* carbonprice(R)):20:6/)
-PUT "];"/;
-
-PUT "Carbon price = [..."/;
-LOOP((R), PUT ORD(R):6:0  carbonprice(R):20:6/)
-PUT "];"/;
-
-
-FILE resultBSP/
-*$include txt_file_beaver/result-BSP.txt
-/;
-
-PUT resultBSP/;
-LOOP((S,RM), PUT ORD(S):6:0 PUT ORD(RM):6:0 SUM((P,Tech), BSP.L(S,RM,P,Tech)):20:6/)
-
-FILE resultPlant/
-*$include txt_file_beaver/result-plant.txt
-/;
-
-PUT resultPlant/;
-LOOP((P,Tech), PUT P.tl PUT ORD(P):6:0 PUT ORD(Tech):6:0 UP.L(P,Tech):15:1/)
-
-FILE resultemission/
-*$include txt_file_beaver/result-emission.txt
-/;
-
-PUT resultemission/
-SUM (R,TOTEMISSIONS.L(R)):20:6/
-
-$offtext
 

@@ -12,28 +12,27 @@
 [RP:UNTITLED_1]
 1=
 
-[RP:DYNAMIC_COFIRING]
-1=
-
 [RP:BECCS_DYN]
 1=
 
+[RP:DYNAMIC_COFIRING]
+1=
+
 [MRUFILES]
-1=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\BECCS_Dyn.gms
-2=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Untitled_1.gms
-3=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams5.put
-4=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\cplex.opt
-5=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams4.put
-6=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\txt_file_beaver/parameter-distance-supply-plant.txt
-7=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.lst
-8=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\cofireDynRec.gms
+1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams6.put
+2=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_Cofiring.lst
+3=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\BECCS_Dyn.gms
+4=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Untitled_1.gms
+5=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams5.put
+6=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\cplex.opt
+7=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams4.put
+8=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\txt_file_beaver/parameter-distance-supply-plant.txt
+9=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\Dynamic_Cofiring.lst
 
 [OPENWINDOW_1]
 FILE0=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_Cofiring.gms
-FILE1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_Cofiring.lst
-FILE2=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams6.put
-FILE3=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_Cofiring.gms
-MAXIM=0
+FILE1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_Cofiring.gms
+MAXIM=1
 TOP=2
 LEFT=6
 HEIGHT=918

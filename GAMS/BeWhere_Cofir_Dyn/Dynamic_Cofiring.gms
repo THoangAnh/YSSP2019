@@ -163,6 +163,7 @@ $include txt_file_beaver/parameter-trans-emission.txt
 parameter EmFoscoal(Y,P)/
 $include txt_file_beaver/parameter-emission-basecase.txt
 /;
+* unit EmFoscoal_tCO2/GWhelec
 
 parameter carbonprice(Y,P,Tech) /
 $include txt_file_beaver/parameter-price-carbon.txt
@@ -309,7 +310,7 @@ transportBMEmission(Y,P,S,T,Tech)..
 
 ProductionEmission(Y,P,Tech)..
          EmissionProduction(Y,P,Tech) =E=
-         SUM((S,RM),EmFoscoal(Y,P)*(Generation(Y,P)/EffCoal(P)*(1-UP(Y,P,Tech)) + Generation(Y,P)/EffCof(P,Tech)*UP(Y,P,Tech) - ElBio(Y,S,RM,P,Tech)/EffCoal(P))) $(YP(Y,P));
+         SUM((S,RM),EmFoscoal(Y,P)*(Generation(Y,P) - ElBio(Y,S,RM,P,Tech))) $(YP(Y,P));
 
 
 totalEmissions(Y)..

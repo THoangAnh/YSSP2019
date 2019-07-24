@@ -139,7 +139,7 @@ $include txt_file_beaver/parameter-efficiency-cofiring.txt
 
 ****** TRANSPORT ******
 
-parameter transDistSupplyPlant(Y,RM,S,P,T) /
+parameter transDistSupplyPlant(S,P,T) /
 $include txt_file_beaver/parameter-distance-supply-plant.txt
 /;
 * unit transDistSupplyPlant_km
@@ -252,7 +252,7 @@ BiomassCost(Y,P,RM,Tech)..
 ****** BIOMASS TRANSPORT COST TO PLANTS ******
 
 biomassTransportSPCost(Y,P,S,RM,T,Tech)..
-         CostBMTransport(Y,P,S,RM,T,Tech) =E= ((transDistSupplyPlant(Y,RM,S,P,T)*tranBiovar(Y,RM,T) + tranBiofix(Y,RM,T))*BSP(Y,S,RM,P,Tech)) $(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM));
+         CostBMTransport(Y,P,S,RM,T,Tech) =E= ((transDistSupplyPlant(S,P,T)*tranBiovar(Y,RM,T) + tranBiofix(Y,RM,T))*BSP(Y,S,RM,P,Tech)) $(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM));
 
 
 ****** PRODUCTION COST ******
@@ -302,7 +302,7 @@ TotalCosteq(Y)..
 transportBMEmission(Y,P,S,T,Tech)..
          EmissionBMTransport(Y,P,S,T,Tech) =E=
          SUM(RM $(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),
-         (transEmissionBiomass(RM,T)*transDistSupplyPlant(Y,RM,S,P,T)*BSP(Y,S,RM,P,Tech)));
+         (transEmissionBiomass(RM,T)*transDistSupplyPlant(S,P,T)*BSP(Y,S,RM,P,Tech)));
 
 
 ****** PRODUCTION EMISSIONS FROM COAL ******

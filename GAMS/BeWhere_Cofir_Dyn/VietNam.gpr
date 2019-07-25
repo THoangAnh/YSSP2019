@@ -9,31 +9,31 @@
 [RP:UNTITLED_1]
 1=
 
-[RP:BECCS_DYN]
+[RP:COFIREDYNRECEMT]
 1=
 
-[RP:COFIREDYNRECEMT]
+[RP:BECCS_DYN]
 1=
 
 [RP:DYNAMIC_COFIRING]
 1=
 
 [MRUFILES]
-1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_Cofiring.lst
-2=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams1.put
-3=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams9.put
-4=P:\beaver\AnHa\BeWhere_Cofire_Dyn\cofireDynRecEMT.gms
-5=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams6.put
-6=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\BECCS_Dyn.gms
-7=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Untitled_1.gms
-8=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams5.put
-9=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\cplex.opt
+1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\txt_file_beaver/parameter_emission_target.txt
+2=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\txt_file_beaver/set-year-supply-raw-material-relation.txt
+3=P:\beaver\HoangAnh_CofirVN\YSSP2019\Archive\BECCS_Dyn.gms
+4=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams1.put
+5=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams9.put
+6=P:\beaver\AnHa\BeWhere_Cofire_Dyn\cofireDynRecEMT.gms
+7=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams6.put
+8=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Untitled_1.gms
 
 [OPENWINDOW_1]
 FILE0=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_Cofiring.gms
-FILE1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_Cofiring.gms
+FILE1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_Cofiring.lst
+FILE2=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_Cofiring.lst
 MAXIM=0
-TOP=6
-LEFT=6
+TOP=-7
+LEFT=11
 HEIGHT=914
-WIDTH=1674
+WIDTH=1363

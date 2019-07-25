@@ -101,8 +101,8 @@ parameter BiomassPotential(Y,S,RM)/
 $include txt_file_beaver/parameter-potential-biomass.txt
 /;
 
-parameter BiomPrice(Y,S,RM)/
-$include txt_file_beaver/parameter-biomass_price.txt
+parameter BiomPrice(Y,RM)/
+$include txt_file_beaver/parameter-biomass-price.txt
 /;
 * unit BiomPrice_$/GWh (GWh is converted from J of biomass heat)
 
@@ -117,11 +117,11 @@ $include txt_file_beaver/parameter-specific-cost-cofiring.txt
 /;
 * unit SpecificCostCofir_$/MWelec
 
-parameter FixOMCostCofir(Y,P,Tech) /
+parameter FixOMCostCofir(Tech) /
 $include txt_file_beaver/parameter-fix-OM-cost-cofiring.txt
 /;
 
-parameter VarOMCostCofir(Y,P,Tech) /
+parameter VarOMCostCofir(Tech) /
 $include txt_file_beaver/parameter-var-OM-cost-cofiring.txt
 /;
 
@@ -144,12 +144,12 @@ $include txt_file_beaver/parameter-distance-supply-plant.txt
 /;
 * unit transDistSupplyPlant_km
 
-parameter tranBiofix(Y,RM,T) /
+parameter tranBiofix(RM,T) /
 $include txt_file_beaver/parameter-transport-fix-cost.txt
 /;
 * unit tranBiofix_$/PJ/km (PJ is expressed by biomass raw energy)
 
-parameter tranBiovar(Y,RM,T)/
+parameter tranBiovar(RM,T)/
 $include txt_file_beaver/parameter-transport-var-cost.txt
 /;
 * unit tranBiovar_$/PJ/km (PJ is expressed by biomass raw energy)
@@ -165,10 +165,14 @@ $include txt_file_beaver/parameter-emission-basecase.txt
 /;
 * unit EmFoscoal_tCO2/GWhelec
 
-parameter carbonprice(Y,P,Tech) /
+parameter carbonprice(Y) /
 $include txt_file_beaver/parameter-price-carbon.txt
 /;
 
+parameter EmTarget(Y)/
+$include txt_file_beaver/parameter_emission_target.txt
+/;
+* unit EmFoscoal_tCO2/GWhelec
 
 * ------------------------------------------------------------------------------
 *                                - VARIALBLES -
@@ -222,6 +226,7 @@ transportBMEmission(Y,P,S,T,Tech)      Emissions from transport
 ProductionEmission(Y,P,Tech)           Emissions generated from production
 totalEmissions(Y)
 totalEmissionsCost(Y)
+EmissionContraint(Y)
 combine
 
 ****** CONSTRAINTS ******
@@ -247,13 +252,13 @@ FossilCost(Y,P)..
 ****** BIOMASS COST FOR CO-FIRING CONFIGURATION ******
 
 BiomassCost(Y,P,RM,Tech)..
-         CostBio(Y,P,RM,Tech) =E= SUM((S)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BiomPrice(Y,S,RM)*BSP(Y,S,RM,P,Tech));
+         CostBio(Y,P,RM,Tech) =E= SUM((S)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),BiomPrice(Y,RM)*BSP(Y,S,RM,P,Tech));
 
 
 ****** BIOMASS TRANSPORT COST TO PLANTS ******
 
 biomassTransportSPCost(Y,P,S,RM,T,Tech)..
-         CostBMTransport(Y,P,S,RM,T,Tech) =E= ((transDistSupplyPlant(S,P,T)*tranBiovar(Y,RM,T) + tranBiofix(Y,RM,T))*BSP(Y,S,RM,P,Tech)) $(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM));
+         CostBMTransport(Y,P,S,RM,T,Tech) =E= ((transDistSupplyPlant(S,P,T)*tranBiovar(RM,T) + tranBiofix(RM,T))*BSP(Y,S,RM,P,Tech)) $(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM));
 
 
 ****** PRODUCTION COST ******
@@ -270,8 +275,8 @@ ProductionCostCoal(Y,P)  $(YP(Y,P))..
 
 ProductionCostCoFir(Y,P,Tech)..
          CofirProductionCost(Y,P,Tech) =E= SUM((S,RM) $(YP(Y,P) and SRM(Y,S,RM)),((InvestmentCoal(Y,P)*Generation(Y,P)*UP(Y,P,Tech)+ SpecificCostCofir(Y,P,Tech)*Urate(Y,S,RM,P,Tech)*Capacity(P))*CRFCofir(P)
-                                           + FixOMCostCofir(Y,P,Tech)*Capacity(P)*UP(Y,P,Tech)
-                                           + VarOMCostCofir(Y,P,Tech)*Generation(Y,P)*UP(Y,P,Tech)));
+                                           + FixOMCostCofir(Tech)*Capacity(P)*UP(Y,P,Tech)
+                                           + VarOMCostCofir(Tech)*Generation(Y,P)*UP(Y,P,Tech)));
 
 *ProductionCostCoFir(Y,P,Tech)..
 *CofirProductionCost(Y,P,Tech) =E= ((InvestmentCoal(Y,P)*(Generation(Y,P)-ElBio(Y,P,Tech))+ SpecificCostCofir(Y,P,Tech)*ElBio(Y,P,Tech)/Generation(Y,P)*Capacity(P))*CRFCofir(P)
@@ -321,7 +326,7 @@ totalEmissions(Y)..
          + SUM((P,Tech),EmissionProduction(Y,P,Tech));
 
 totalEmissionsCost(Y)..
-         TOTEMISSIONSCOST(Y) =E= SUM((P,Tech),TOTEMISSIONS(Y)*carbonprice(Y,P,Tech));
+         TOTEMISSIONSCOST(Y) =E= SUM((P,Tech),TOTEMISSIONS(Y)*carbonprice(Y));
 
 *-------------------------------------------------------------------------------
 *-----------------------   OBJECTIVE FUNCTION    -------------------------------
@@ -380,7 +385,8 @@ ElBioMaxConstraint(Y,P,Tech)..
 ElBioMinConstraint(Y,P,Tech)..
          SUM((S,RM)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =G= UrateLow(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
-
+EmissionContraint(Y)..
+         TOTEMISSIONS(Y) =L= EmTarget(Y);
 * ------------------------------------------------------------------------------
 *
 FILE cplexOpt/ cplex.opt /;
@@ -392,12 +398,12 @@ PUTCLOSE cplexOpt;
 *
 ************************************
 MODEL facilityLocation  /ALL/;
-facilityLocation.ITERLIM   = 1000000;
+facilityLocation.ITERLIM   = 5E+5;
 facilityLocation.RESLIM    =  100000;
 facilityLocation.NODLIM    = 1000000;
-facilityLocation.OPTCA     =  0;
-facilityLocation.OPTCR     =  0;
-facilityLocation.CHEAT     =  0;
+*facilityLocation.OPTCA     =  0;
+facilityLocation.OPTCR     =  0.03;
+*facilityLocation.CHEAT     =  0;
 facilityLocation.CUTOFF    =  1E+20;
 facilityLocation.TRYINT    =  .01;
 facilityLocation.OPTFILE   = 1;

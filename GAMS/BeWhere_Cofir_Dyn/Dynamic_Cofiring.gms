@@ -362,8 +362,8 @@ ElectricityBiomass(Y,S,RM,P,Tech)..
          SUM((T)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),EffCof(P,Tech)*BSP(Y,S,RM,P,Tech))
          =E= ElBio(Y,S,RM,P,Tech);
 
-ElectricityShare(Y,P) $(YP(Y,P))..
-         SUM((S,RM,Tech), ElBio(Y,S,RM,P,Tech)) =L= Generation(Y,P);
+ElectricityShare(Y,P) ..
+         SUM((S,RM,Tech) $(YP(Y,P) and SRM(Y,S,RM)), ElBio(Y,S,RM,P,Tech)) =L= Generation(Y,P)*SUM(Tech,UP(Y,P,Tech));
 
 ******------ BIOMASS SHARE ------******
 
@@ -371,10 +371,10 @@ BiomShare(Y,P,Tech)..
          Urate(Y,P,Tech) =E= SUM((RM,S) $(YP(Y,P) and SRM(Y,S,RM)), ElBio(Y,S,RM,P,Tech)/Generation(Y,P)) ;
 
 BiomShareMax(Y,P,Tech) $(YP(Y,P))..
-         Urate(Y,P,Tech) =L= UrateHigh(Tech);
+         Urate(Y,P,Tech) =L= UrateHigh(Tech)*UP(Y,P,Tech);
 
 BiomShareMin(Y,P,Tech)  $(YP(Y,P))..
-         Urate(Y,P,Tech) =G= UrateLow(Tech);
+         Urate(Y,P,Tech) =G= UrateLow(Tech)*UP(Y,P,Tech);
 
 ******------ TECHNOLOGIES ------******
 
@@ -392,10 +392,10 @@ plantTypeRestriction(Y,P) $(YP(Y,P))..
 * Contraints on max and min biomass
 
 ElBioMaxConstraint(Y,P,Tech)..
-          SUM((S,RM)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P);
+          SUM((S,RM)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =L= UrateHigh(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 ElBioMinConstraint(Y,P,Tech)..
-         SUM((S,RM)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =G= UrateLow(Tech)*Generation(Y,P);
+         SUM((S,RM)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)),ElBio(Y,S,RM,P,Tech)) =G= UrateLow(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
 * Constraints on emissions target
 EmissionContraint(Y)..
@@ -476,7 +476,7 @@ LOOP((Y,P), PUT "[" ORD(Y):6:0"," PUT ORD(P):6:0"," SUM((RM,S,Tech),ElBio.L(Y,S,
 PUT "]"/;
 
 PUT "np.Urate = ["/
-LOOP((Y,P), PUT "[" ORD(Y):6:0"," PUT ORD(P):6:0"," SUM((Tech),Urate.L(Y,P,Tech)):15:6"],"/)
+LOOP((Y,P), PUT "[" ORD(Y):6:0"," PUT ORD(P):6:0"," SUM(Tech,Urate.L(Y,P,Tech)):15:6"],"/)
 PUT "]"/;
 
 PUT "np.TOTCOST_$ = ["/;

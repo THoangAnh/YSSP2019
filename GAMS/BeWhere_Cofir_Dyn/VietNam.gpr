@@ -6,21 +6,11 @@
 [RP:COFIREDYNRECEMT]
 1=
 
-[RP:UNTITLED_1]
-1=
-
 [RP:DYNAMIC_COFIRINGPP]
 1=
 
 [RP:DYNAMIC_COFIRING]
 1=
-
-[OPENWINDOW_1]
-MAXIM=0
-TOP=24
-LEFT=109
-HEIGHT=807
-WIDTH=1302
 
 [RP:BECCS_DYN]
 1=
@@ -28,16 +18,26 @@ WIDTH=1302
 [RP:COFIREDYNREC]
 1=
 
+[RP:UNTITLED_1]
+1=
+
+[OPENWINDOW_1]
+MAXIM=0
+TOP=-12
+LEFT=106
+HEIGHT=807
+WIDTH=1302
+
 [RP:DYNAMIC_COFIRINGPP2]
 1=
 
 [MRUFILES]
 1=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_CofiringPP2.gms
 2=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Dynamic_CofiringPP2.lst
-3=P:\beaver\HoangAnh_CofirVN\YSSP2019\BeWhere_recursive\cofireDynRec.gms
-4=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams2.put
-5=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams1.put
-6=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams7.put
-7=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams6.put
-8=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams5.put
-9=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams4.put
+3=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\Untitled_1.gms
+4=P:\beaver\HoangAnh_CofirVN\YSSP2019\BeWhere_recursive\cofireDynRec.gms
+5=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams2.put
+6=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams1.put
+7=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams7.put
+8=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams6.put
+9=P:\beaver\HoangAnh_CofirVN\YSSP2019\GAMS\BeWhere_Cofir_Dyn\gams5.put

@@ -191,6 +191,7 @@ EmissionProduction(Y,P)
 AvailableBiomass(Y,S,RM)
 
 EmissionCofirplants(Y,P)
+TotalCostCofirPlants(Y,P)
 
 variable
 COMBINEEQUATIONS
@@ -222,6 +223,7 @@ ElBioMinConstraint(Y,P,Tech)
 *EmissionContraint(Y)
 
 EmissionfromCofirplants(Y,P)
+TotalCofirPlantsCost(Y,P)
 ;
 *-------------------------------------------------------------------------------
 *-----------------------   COSTS    --------------------------------------------
@@ -252,15 +254,17 @@ ProductionCostCoFir(Y,P,Tech) $(YP(Y,P))..
                                            + FixOMCostCofir(Tech)*Capacity(P)*UP(Y,P,Tech)
                                           + VarOMCostCofir(Tech)*Generation(Y,P)*UP(Y,P,Tech);
 
-*ProductionCostCoFir(Y,P,Tech)..
-*         CofirProductionCost(Y,P,Tech) =E= SUM((S,RM) $(YP(Y,P) and SRM(Y,S,RM)),((InvestmentCoal(Y,P)*(Generation(Y,P)*(1-Urate(y,p,tech)))+ SpecificCostCofir(Y,P,Tech)*Urate(Y,P,Tech)*Capacity(P))*CRFCofir(P)
-*                                           + FixOMCostCofir(Tech)*Capacity(P)*UP(Y,P,Tech)
-*                                          + VarOMCostCofir(Tech)*Generation(Y,P)*UP(Y,P,Tech)));
-
 ****** BIOMASS TRANSPORT COST TO PLANTS ******
 
 biomassTransportSPCost(Y,P,Tech)..
          CostBMTransport(Y,P,Tech) =E= SUM((S,RM,T)$(RMTe(RM,Tech) and YP(Y,P) and SRM(Y,S,RM)and transDistSupplyPlant(S,P)),((transDistSupplyPlant(S,P)*tranBiovar(RM,T) + tranBiofix(RM,T))*BSP(Y,S,RM,P,Tech)));
+
+* Total cost co-firing power plants, used only to PUT results
+TotalCofirPlantsCost(Y,P)..
+        TotalCostCofirPlants(Y,P) =E= SUM(Tech,CostCofiring (Y,P,Tech))
+                                    + SUM(Tech, CostBio(Y,P,Tech))
+                                    + SUM(Tech,CofirProductionCost(Y,P,Tech))
+                                    + SUM(Tech,CostBMTransport(Y,P,Tech));
 
 TotalCosteq(Y)..
          TOTCOST(Y) =E=
@@ -308,7 +312,7 @@ totalEmissions(Y)..
 *-------------------------------------------------------------------------------
 
 combine..
-         COMBINEEQUATIONS =E= sum(Y,TOTCOST(Y)+ (TOTEMISSIONS(Y)*carbonprice(Y)));
+         COMBINEEQUATIONS =E= sum(Y,TOTCOST(Y)+(TOTEMISSIONS(Y)*carbonprice(Y)));
 
 
 *-------------------------------------------------------------------------------
@@ -358,7 +362,7 @@ ElBioMinConstraint(Y,P,Tech)..
 
 * Constraints on emissions target
 *EmissionContraint(Y)..
-*        TOTEMISSIONS(Y) =L= EmTarget(Y);
+*      TOTEMISSIONS(Y) =L= EmTarget(Y);
 
 FILE cplexOpt/ cplex.opt /;
 PUT cplexOpt;
@@ -369,7 +373,9 @@ PUTCLOSE cplexOpt;
 *
 ************************************
 MODEL facilityLocation  /ALL/;
-facilityLocation.ITERLIM   = 1E+6;
+*facilityLocation.ITERLIM   = 1E+6;
+* For emission reduction 15%, should increase nb interation
+facilityLocation.ITERLIM   = 1E+7;
 facilityLocation.RESLIM    =  100000;
 facilityLocation.NODLIM    = 1000000;
 *facilityLocation.OPTCA     =  0;
@@ -424,100 +430,161 @@ PUT ";"/;
 PUT "%---- Main numbers ----"/;
 *
 PUT "np.Carbon_price = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," carbonprice(Y):15:1"],"/)
-PUT "]"/;
-
-PUT "np.Gene_cofir = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," (SUM((P),Generation(Y,P)*SUM(Tech,UP.L(Y,P,Tech)))):15:1"],"/)
-PUT "]"/;
-
-
-
-
-
-
-$ontext
-PUT "np.Plants_Cofiring_Per_Year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," SUM((P,Tech),UP.L(Y,P,Tech)):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 carbonprice(Y):15:1/)
 PUT "]"/;
 
 PUT "np.Plants_Cofiring_Per_Year = ["/
-LOOP((Y,P,Tech), PUT "[" ORD(Y):6:0"," PUT ORD(P):6:0"," PUT ORD(Tech):6:0"," UP.L(Y,P,Tech):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 SUM((P,Tech),UP.L(Y,P,Tech)):15:1/)
 PUT "]"/;
 
-PUT "np.Plants_Cofiring_Per_Tech = ["/
-LOOP((Y,Tech), PUT "[" ORD(Y):6:0"," PUT ORD(Tech):6:0"," SUM((P),UP.L(Y,P,Tech)):15:1"],"/)
+
+* GENERATION
+
+PUT "np.Total_generation_GWh = ["/
+LOOP((Y), PUT ORD(Y):6:0"," (SUM(P,Generation(Y,P))):15:1/)
 PUT "]"/;
 
-PUT "np.Electricity_Biomass_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," SUM((P,Tech),ElBio.L(Y,P,Tech)):15:1"],"/)
+* Generation from plants
+
+PUT "np.Generation_from_cofiring_plants_GWh = ["/
+LOOP((Y), PUT ORD(Y):6:0 (SUM((P),Generation(Y,P)*SUM(Tech,UP.L(Y,P,Tech)))):15:1/)
 PUT "]"/;
 
-PUT "np.Electricity_generation_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," SUM((P),Generation(Y,P)):15:1"],"/)
+PUT "np.Generation_from_coal_plants_GWh = ["/
+LOOP((Y), PUT ORD(Y):6:0 (SUM((P),Generation(Y,P)*(1-SUM(Tech,UP.L(Y,P,Tech))))):15:1/)
 PUT "]"/;
+
+* Generation from fuel
+
+PUT "np.Electricity_produced_from_Biomass_per_year_GWh = ["/
+LOOP((Y), PUT ORD(Y):6:0 SUM((P,Tech),ElBio.L(Y,P,Tech)):15:1/)
+PUT "]"/;
+
+PUT "np.Electricity_produced_from_Coal_per_year_GWh = ["/
+LOOP((Y), PUT ORD(Y):6:0 (SUM(P,Generation(Y,P))- SUM((P,Tech),ElBio.L(Y,P,Tech))):15:1/)
+PUT "]"/;
+
+* Biomass share
+
+PUT "np.Biomass_share_per_year = ["/
+LOOP((Y), PUT ORD(Y):6:0 (SUM((P,Tech),ElBio.L(Y,P,Tech))/(SUM(P,Generation(Y,P)))):15:1/)
+PUT "]"/;
+
+* EMISSIONS
 
 PUT "np.Total_emissions_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," TOTEMISSIONS.L(Y):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 TOTEMISSIONS.L(Y):15:1/)
 PUT "]"/;
 
-PUT "np.Total_emissions_from_cofir_plants = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," SUM(P,EmissionCofirplants.L(Y,P)):15:1"],"/)
+*Emissions from plants
+
+PUT "np.Total_emissions_from_cofiring_plants = ["/
+LOOP((Y), PUT ORD(Y):6:0 SUM(P,EmissionCofirplants.L(Y,P)):15:1/)
 PUT "]"/;
+
+PUT "np.Total_emissions_from_coal_plants = ["/
+LOOP((Y), PUT ORD(Y):6:0 (TOTEMISSIONS.L(Y) - SUM(P,EmissionCofirplants.L(Y,P))):15:1/)
+PUT "]"/;
+
+*Emissions from fuel
 
 PUT "np.Total_emissions_from_biomass_transport_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," SUM((P,Tech),EmissionBMTransport.L(Y,P,Tech)):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 SUM((P,Tech),EmissionBMTransport.L(Y,P,Tech)):15:1/)
 PUT "]"/;
 
 PUT "np.Total_emissions_from_coal_combustion_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," SUM((P),EmissionProduction.L(Y,P)):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 SUM((P),EmissionProduction.L(Y,P)):15:1/)
 PUT "]"/;
-$offtext
+
+* Emission reductions
 PUT "np.Total_emissions_reduction_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," (EmFoscoal(Y)*SUM(P,(Generation(Y,P)))- TOTEMISSIONS.L(Y)):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 (EmFoscoal(Y)*SUM(P,(Generation(Y,P)))- TOTEMISSIONS.L(Y)):15:1/)
 PUT "]"/;
 
-PUT "np.Total_cost_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0","  (TOTCOST.L(Y) + TOTEMISSIONS.L(Y)*carbonprice(Y)):15:1"],"/)
+*COST
+
+PUT "np.Total_cost_per_year_INCLUDE_EMISSION_COST = ["/
+LOOP((Y), PUT ORD(Y):6:0  (TOTCOST.L(Y) + TOTEMISSIONS.L(Y)*carbonprice(Y)):15:1/)
 PUT "]"/;
 
-PUT "np.Total_cost_from_production_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0","  TOTCOST.L(Y):15:1"],"/)
+* Cost from plants
+
+PUT "np.Total_cost_from_cofiring_plants_per_year_INCLUDE_EMISSION_COST = ["/
+LOOP((Y), PUT ORD(Y):6:0 (SUM(P,TotalCostCofirPlants.L(Y,P)) + SUM(P,EmissionCofirplants.L(Y,P))*carbonprice(Y)):15:1/)
+PUT "]"/;
+
+PUT "np.Total_cost_from_coal_plants_per_year_INCLUDE_EMISSION_COST = ["/
+LOOP((Y), PUT ORD(Y):6:0 ((TOTCOST.L(Y) + TOTEMISSIONS.L(Y)*carbonprice(Y)) - (SUM(P,TotalCostCofirPlants.L(Y,P)) + SUM(P,EmissionCofirplants.L(Y,P))*carbonprice(Y))):15:1/)
+PUT "]"/;
+
+PUT "np.Total_cost_from_whole_production_per_year = ["/
+LOOP((Y), PUT ORD(Y):6:0  TOTCOST.L(Y):15:1/)
 PUT "]"/;
 
 PUT "np.Total_emission_cost_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0","  (TOTEMISSIONS.L(Y)*carbonprice(Y)):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 (TOTEMISSIONS.L(Y)*carbonprice(Y)):15:1/)
 PUT "]"/;
 
 PUT "np.Total_coal_cost_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," (SUM(P,CostFossil.L(Y,P))+SUM((P,Tech),CostCofiring.L(Y,P,Tech))):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 (SUM(P,CostFossil.L(Y,P))+SUM((P,Tech),CostCofiring.L(Y,P,Tech))):15:1/)
 PUT "]"/;
 
 PUT "np.Total_biomass_cost_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," SUM((P,Tech),CostBio.L(Y,P,Tech)):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 SUM((P,Tech),CostBio.L(Y,P,Tech)):15:1/)
 PUT "]"/;
 
 PUT "np.Total_electricity_production_cost_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," (SUM(P, CoalProductionCost.L(Y,P)) + SUM((P,Tech), CofirProductionCost.L(Y,P,Tech))):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 (SUM(P, CoalProductionCost.L(Y,P)) + SUM((P,Tech), CofirProductionCost.L(Y,P,Tech))):15:1/)
 PUT "]"/;
 
 PUT "np.Total_biomass_transport_cost_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," SUM((P,Tech),CostBMTransport.L(Y,P,Tech)):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 SUM((P,Tech),CostBMTransport.L(Y,P,Tech)):15:1/)
+PUT "]"/;
+
+PUT "np.Total_emission_cost_from_biomass_transport_per_year = ["/
+LOOP((Y), PUT ORD(Y):6:0 (SUM((P,Tech),EmissionBMTransport.L(Y,P,Tech))*carbonprice(Y)):15:1/)
+PUT "]"/;
+
+PUT "np.Total_emission_cost_from_coal_combustion_per_year = ["/
+LOOP((Y), PUT ORD(Y):6:0 (SUM((P),EmissionProduction.L(Y,P))*carbonprice(Y)):15:1/)
+PUT "]"/;
+
+* Avoided cost
+
+PUT "np.Avoided_cost_per_year = ["/
+LOOP((Y), PUT ORD(Y):6:0 ((TOTCOST.L(Y) + TOTEMISSIONS.L(Y)*carbonprice(Y))/(EmFoscoal(Y)*SUM(P,(Generation(Y,P)))- TOTEMISSIONS.L(Y))):15:1/)
 PUT "]"/;
 
 
+* LCOE in different cases
 
-$ontext
 PUT "np.LCOE_coal_plants_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," SUM(P,coalPrice(Y,P)* Generation(Y,P)/EffCoal(P) + CostIOMCoal(Y,P)*Generation(Y,P))/ SUM(P,Generation(Y,P)):15:1"],"/)
+LOOP((Y), PUT ORD(Y):6:0 SUM(P,coalPrice(Y,P)* Generation(Y,P)/EffCoal(P) + CostIOMCoal(Y,P)*Generation(Y,P))/ SUM(P,Generation(Y,P)):15:1/)
 PUT "]"/;
 
-PUT "np.LCOE_co-firing_plants_without_emission_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," (TOTCOST.L(Y)/SUM(P,Generation(Y,P))):15:1"],"/)
+PUT "np.LCOE_cofiring_plants_per_year = ["/
+LOOP((Y), PUT ORD(Y):6:0 ((SUM(P,TotalCostCofirPlants.L(Y,P)) + SUM(P,EmissionCofirplants.L(Y,P))*carbonprice(Y))/(SUM((P),Generation(Y,P)*SUM(Tech,UP.L(Y,P,Tech))))):15:1/)
 PUT "]"/;
 
-PUT "np.LCOE_co-firing_plants_with_emission_per_year = ["/
-LOOP((Y), PUT "[" ORD(Y):6:0"," ((TOTCOST.L(Y) + TOTEMISSIONS.L(Y)*carbonprice(Y))/SUM(P,Generation(Y,P))):15:1"],"/)
+PUT "np.LCOE_all_plants_without_emission_per_year = ["/
+LOOP((Y), PUT ORD(Y):6:0 (TOTCOST.L(Y)/SUM(P,Generation(Y,P))):15:1/)
 PUT "]"/;
 
-$offtext
+PUT "np.LCOE_all_plants_with_emission_per_year = ["/
+LOOP((Y), PUT ORD(Y):6:0 ((TOTCOST.L(Y) + TOTEMISSIONS.L(Y)*carbonprice(Y))/SUM(P,Generation(Y,P))):15:1/)
+PUT "]"/;
+
+
+
+
+PUT "np.Plants_Cofiring_Per_Year = ["/
+LOOP((Y,P,Tech), PUT ORD(Y):6:0 PUT ORD(P):6:0"," PUT ORD(Tech):6:0"," UP.L(Y,P,Tech):15:1/)
+PUT "]"/;
+
+PUT "np.Plants_Cofiring_Per_Tech = ["/
+LOOP((Y,Tech), PUT ORD(Y):6:0 PUT ORD(Tech):6:0"," SUM((P),UP.L(Y,P,Tech)):15:1/)
+PUT "]"/;
+
+
+
+

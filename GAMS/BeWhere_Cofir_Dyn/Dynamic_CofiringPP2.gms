@@ -373,9 +373,9 @@ PUTCLOSE cplexOpt;
 *
 ************************************
 MODEL facilityLocation  /ALL/;
-*facilityLocation.ITERLIM   = 1E+6;
+facilityLocation.ITERLIM   = 1E+6;
 * For emission reduction 15%, should increase nb interation
-facilityLocation.ITERLIM   = 1E+7;
+*facilityLocation.ITERLIM   = 1E+7;
 facilityLocation.RESLIM    =  100000;
 facilityLocation.NODLIM    = 1000000;
 *facilityLocation.OPTCA     =  0;
